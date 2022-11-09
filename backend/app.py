@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -7,6 +7,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+#creates crimecode table
 class crimecode(db.Model):
  
     CODE = db.Column(db.String(10), primary_key=True)
@@ -15,7 +16,8 @@ class crimecode(db.Model):
     def __init__(self, CODE, CrimeName):
         self.CODE = CODE
         self.CrimeName = CrimeName
-        
+     
+#creates covidcase table   
 class covidcase(db.Model):
  
     DayNum = db.Column(db.Integer, primary_key=True)
@@ -31,7 +33,8 @@ class covidcase(db.Model):
         self.DailyIncrease = DailyIncrease
         self.AVGIncrease = AVGIncrease
         
-        
+
+#creates crimedata table       
 class crimedata(db.Model):
 
     RowId = db.Column(db.Integer, primary_key=True)
@@ -54,3 +57,29 @@ class crimedata(db.Model):
         self.Age = Age
         self.District = District
         self.GeoLocation = GeoLocation
+
+######initial route for display all data. i.e graphs heatmap etc.###############        
+@app.route('/')
+def index():
+    all_covid = covidcase.query.all()
+    all_crime = crimedata.query.all()
+    return render_template()
+
+
+####update for when user changes a startdate, end date and or location for covid data##########
+# @app.route('/update', methods = ['GET', 'POST'])
+# def update():
+
+#     if request.method == 'POST':
+#         my_data = covidcase.query.get(request.form.get('DayNum')) #may not need this line
+
+#         my_data.DayNum = request.form['DayNum']
+#         my_data.student_name = request.form['DATE']
+#         my_data.credits_earned = request.form['DATE']
+
+#         db.session.commit()
+
+#         return redirect(url_for('index'))
+        
+if __name__ == "__main__":
+    app.run(debug=True)
