@@ -1,5 +1,7 @@
 from flask import Flask, jsonify, request, render_template
 from flask_sqlalchemy import SQLAlchemy
+#import pymysql
+#pymysql.install_as_MySQLdb()
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:PASSWORD@localhost:3306/DATABASENAME'
@@ -40,7 +42,7 @@ class crimedata(db.Model):
     RowId = db.Column(db.Integer, primary_key=True)
     DayNum = db.Column(db.Integer)
     CrimeDateTime = db.Column(db.String(255))
-    CrimeCode = db.Column(db.string(10))
+    CrimeCode = db.Column(db.String(10))
     Weapon = db.Column(db.String(255))
     Gender = db.Column(db.String(10))
     Age = db.Column(db.Integer)
@@ -57,6 +59,11 @@ class crimedata(db.Model):
         self.Age = Age
         self.District = District
         self.GeoLocation = GeoLocation
+
+def parse_geodata(GeoLocation):
+    GeoLocation = GeoLocation.strip('()').split(',')
+    GeoLocation = [float(x) for x in GeoLocation]
+    return GeoLocation
 
 ######initial route for display all data. i.e graphs heatmap etc.###############        
 @app.route('/')
