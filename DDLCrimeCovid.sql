@@ -1,6 +1,10 @@
-﻿drop table if exists `CrimeCode`;
+drop database if exists CrimeCovid;
+create database if not exists CrimeCovid;
+use CrimeCovid;
+
+drop table if exists `CrimeCode`;
 create table if not exists `CrimeCode`(
-	`Code` varchar(3),
+	`Code` varchar(4),
 	`CrimeName` varchar(20),
 	primary key (`Code`)
 );
@@ -19,8 +23,8 @@ drop table if exists `Crime`;
 create table if not exists `Crime`(
 	`RowID` mediumint,
 	`DayNum` smallint,
-	`CrimeDateTime` datetime,
-	`CrimeCode` varchar(3),
+	`CrimeDate` date,
+	`CrimeCode` varchar(4),
 	`Weapon` varchar(20),
 	`Gender` char,
 	`Age` tinyint,
@@ -29,7 +33,3 @@ create table if not exists `Crime`(
 	`Longitude` float,
 	primary key (`RowID`)
 );
-
-
-
-
