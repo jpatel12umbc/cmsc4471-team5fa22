@@ -49,33 +49,31 @@ class CovidSchema(ma.Schema):
 covid_schema = CovidSchema(many=True)
 
 #creates crimedata table       
-class crimedata(db.Model):
+#creates Crime table      
 
+class Crime(db.Model):
     RowId = db.Column(db.Integer, primary_key=True)
     DayNum = db.Column(db.Integer)
-    CrimeDateTime = db.Column(db.String(255))
+    CrimeDate = db.Column(db.DateTime)
     CrimeCode = db.Column(db.String(10))
-    Weapon = db.Column(db.String(255))
+    Weapon = db.Column(db.Integer)
     Gender = db.Column(db.String(10))
     Age = db.Column(db.Integer)
     District = db.Column(db.String(10))
-    GeoLocation = db.Column(db.String(255))
-    
-    def __init__(self, RowID, DayNum, CrimeDateTime, CrimeCode, Weapon, Gender, Age, District, GeoLocation):
+    Latitude = db.Column(db.Float)
+    Longitude = db.Column(db.Float)
+
+    def __init__(self, RowID, DayNum, CrimeDate, CrimeCode, Weapon, Gender, Age, District, Latitude, Longitude):
         self.RowID = RowID
         self.DayNum = DayNum
-        self.CrimeDateTime = CrimeDateTime
+        self.CrimeDate = CrimeDate
         self.CrimeCode = CrimeCode
         self.Weapon = Weapon
         self.Gender = Gender
         self.Age = Age
         self.District = District
-        self.GeoLocation = GeoLocation
-
-def parse_geodata(GeoLocation):
-    GeoLocation = GeoLocation.strip('()').split(',')
-    GeoLocation = [float(x) for x in GeoLocation]
-    return GeoLocation
+        self.Latitude = Latitude
+        self.Longitude = Longitude
 
 
 ######initial route for display all data. i.e graphs heatmap etc.###############        
