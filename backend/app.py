@@ -2,11 +2,12 @@ from flask import Flask, jsonify, request, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_cors import CORS
+from datetime import datetime
 import pymysql
 pymysql.install_as_MySQLdb()
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:1234@localhost:3306/447_groupproj'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:1234@localhost:3306/crimecovid'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -29,7 +30,7 @@ class crimecode(db.Model):
 class covidcase(db.Model):
  
     DayNum = db.Column(db.Integer, primary_key=True)
-    DATE = db.Column(db.String(255))
+    DATE = db.Column(db.DateTime)
     TotalCases = db.Column(db.Integer)
     DailyIncrease = db.Column(db.Integer)
     AVGIncrease = db.Column(db.Integer)
@@ -48,11 +49,10 @@ class CovidSchema(ma.Schema):
 
 covid_schema = CovidSchema(many=True)
 
-#creates crimedata table       
-#creates Crime table      
-
+#creates Crime table       
 class Crime(db.Model):
-    RowId = db.Column(db.Integer, primary_key=True)
+
+    RowID = db.Column(db.Integer, primary_key=True)
     DayNum = db.Column(db.Integer)
     CrimeDate = db.Column(db.DateTime)
     CrimeCode = db.Column(db.String(10))
@@ -62,7 +62,7 @@ class Crime(db.Model):
     District = db.Column(db.String(10))
     Latitude = db.Column(db.Float)
     Longitude = db.Column(db.Float)
-
+    
     def __init__(self, RowID, DayNum, CrimeDate, CrimeCode, Weapon, Gender, Age, District, Latitude, Longitude):
         self.RowID = RowID
         self.DayNum = DayNum
@@ -75,13 +75,19 @@ class Crime(db.Model):
         self.Latitude = Latitude
         self.Longitude = Longitude
 
+"""
+def parse_geodata(GeoLocation):
+    GeoLocation = GeoLocation.strip('()').split(',')
+    GeoLocation = [float(x) for x in GeoLocation]
+    return GeoLocation
+"""
 
 ######initial route for display all data. i.e graphs heatmap etc.###############        
 @app.route('/', methods=['GET'])
 def index():
     all_covid = covidcase.query.all()
     #query = covid_schema.dump(all_covid)
-    #all_crime = crimedata.query.all()
+    #all_crime = Crime.query.all()
 
     #testing
     rollingavg = []
@@ -103,7 +109,7 @@ def dateslist():
 
     #user's input from frontend filter
     sdate = str(request.args.get("startdate"))
-    edate = (request.args.get("enddate"))
+    edate = str(request.args.get("enddate"))
 
     all_covid = covidcase.query.all()
     #query = covid_schema.dump(all_covid)
@@ -114,6 +120,9 @@ def dateslist():
     sdate += " 10:00:00+00"
     edate = edate.replace("-", "/")
     edate += " 10:00:00+00"
+
+    sdate = datetime.strptime(sdate, '%Y/%m/%d %H:%M:%S+%f')
+    edate = datetime.strptime(edate, '%Y/%m/%d %H:%M:%S+%f')
 
     startd = covidcase.query.filter_by(DATE = sdate).first()
     endd = covidcase.query.filter_by(DATE = edate).first()
@@ -129,7 +138,7 @@ def dateslist():
     i = startDayNum
     while i <= endDayNum:
         #adds dictionaries to the list, for x and y coordinate of each point on the graph (x as DATETIME format)
-        dict = {"x": (all_covid[i-1].DATE)[0:10], "y": all_covid[i-1].AVGIncrease}
+        dict = {"x": str((all_covid[i-1].DATE))[0:10], "y": all_covid[i-1].AVGIncrease}
 
         #adds dictionaries to the list, for x and y coordinate of each point on the graph (x as DayNum int format)
         #dict = {"x": i, "y": all_covid[i].AVGIncrease}
@@ -138,6 +147,176 @@ def dateslist():
 
     #returning value will override the coviddata variable (in App.js) to update the graph
     return jsonify(rollingavg)
+
+
+
+#Default bar graph for criminal ages, default all districts and not all dates
+@app.route('/crimebargraph', methods=['GET'])
+def agelist():
+
+    defaultstart = 1
+    defaultend = 100
+    
+    #list to keep track of counts in each category in ranges list
+    range_count = [0,0,0,0,0,0,0,0]
+    ranges = ["<20","20-25","26-35","36-50","51-60","61-69","70+", "NA"]
+    
+    #list holds dictionaries to be used as the bar graph's data 
+    crime_ages = []
+    i=defaultstart
+    while i < defaultend:
+        crime = Crime.query.get(i)
+        age = crime.Age
+
+        if(age < 20 and age > 0):
+            range_count[0] +=1
+
+        elif(age >= 20 and age <= 25):
+            range_count[1] +=1
+
+        elif(age >= 26 and age <=35):
+            range_count[2] +=1
+
+        elif(age >= 36 and age <= 50):
+            range_count[3] +=1
+
+        elif(age >= 51 and age <=60):
+            range_count[4] +=1
+
+        elif(age >= 61 and age <= 69):
+            range_count[5] +=1
+
+        elif(age >= 70):
+            range_count[6] +=1
+
+        #NA age
+        elif(age == 0): 
+            range_count[7] +=1
+
+        i+=1
+
+    q = 0
+    while q < len(range_count):
+        dict = {"x":ranges[q], "y": range_count[q]}
+       # print(dict)
+        crime_ages.append(dict)
+
+        q+=1
+
+    return crime_ages
+
+
+#Updates bar graph for criminal ages with user input from form 
+@app.route('/crimeagebargraphupdate', methods=['GET'])
+def agelistupdate():
+
+    #gets user input for start/end date and district
+    sdate = str(request.args.get("startdatebga"))
+    edate = str(request.args.get("enddatebga"))
+    district = str(request.args.get("districtbga"))
+
+    #format html calendar input into datetime to query matches
+    sdate = datetime.strptime(sdate, '%Y-%m-%d')
+    edate = datetime.strptime(edate, '%Y-%m-%d')
+
+    #gets first entry for given date to get its RowID
+    startd = Crime.query.filter_by(CrimeDate = sdate).first()
+
+    endtemp = Crime.query.filter_by(CrimeDate = edate).all()
+    endd = endtemp[len(endtemp)-1] #get last element of that day for its RowID
+
+    startRowID = int(startd.RowID)
+    endRowID = int(endd.RowID)
+
+    #list to keep track of counts in each category in ranges list
+    range_count = [0,0,0,0,0,0,0,0]
+    ranges = ["<20","20-25","26-35","36-50","51-60","61-69","70+", "NA"]
+    
+    #list holds dictionaries to be used as the bar graph's data 
+    crime_ages = []
+
+    #print(startRowID , " ", endRowID)
+
+    #Get all districts
+    if(district == "Al"):
+        i=startRowID
+        while i <= endRowID:
+            crime = Crime.query.get(i)
+            age = crime.Age
+
+            if(age < 20 and age > 0):
+                range_count[0] +=1
+
+
+            elif(age >= 20 and age <= 25):
+                range_count[1] +=1
+
+            elif(age >= 26 and age <=35):
+                range_count[2] +=1
+
+            elif(age >= 36 and age <= 50):
+                range_count[3] +=1
+
+            elif(age >= 51 and age <=60):
+                range_count[4] +=1
+
+            elif(age >= 61 and age <= 69):
+                range_count[5] +=1
+
+            elif(age >= 70):
+                range_count[6] +=1
+
+            #NA age
+            elif(age == 0): 
+                range_count[7] +=1
+
+            i+=1
+
+    #When a specific district has been selected
+    if(district != "Al"):
+        i=startRowID
+        while i <= endRowID:
+            crime = Crime.query.get(i)
+            if(crime.District == district):
+                age = crime.Age
+
+                if(age < 20 and age > 0):
+                    range_count[0] +=1
+
+
+                elif(age >= 20 and age <= 25):
+                    range_count[1] +=1
+
+                elif(age >= 26 and age <=35):
+                    range_count[2] +=1
+
+                elif(age >= 36 and age <= 50):
+                    range_count[3] +=1
+
+                elif(age >= 51 and age <=60):
+                    range_count[4] +=1
+
+                elif(age >= 61 and age <= 69):
+                    range_count[5] +=1
+
+                elif(age >= 70):
+                    range_count[6] +=1
+
+                #NA age
+                elif(age == 0): 
+                    range_count[7] +=1
+
+            i+=1
+
+    q = 0
+    while q < len(range_count):
+        dict = {"x":ranges[q], "y": range_count[q]}
+        #print(dict)
+        crime_ages.append(dict)
+
+        q+=1
+
+    return crime_ages
     
 
 ###############################################################################################################################
