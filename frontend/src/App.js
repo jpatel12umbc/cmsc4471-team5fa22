@@ -1,7 +1,7 @@
 import './App.css';
-import React,{useRef, useEffect, useState} from 'react';
+import React,{useRef, useEffect, useState,setState} from 'react';
 import Axios from 'axios';
-import {XYPlot, XAxis, YAxis, HorizontalGridLines, VerticalGridLines, LineSeries, VerticalBarSeries,VerticalBarSeriesCanvas} from "react-vis";
+import {XYPlot, XAxis, YAxis, HorizontalGridLines, VerticalGridLines, LineSeries, VerticalBarSeries,FlexibleXYPlot} from "react-vis";
 
 
 function App(){
@@ -20,6 +20,10 @@ function App(){
   const [startDatebga, setStartDatebga] = useState('');
   const [districtbga, setdistrictbga] = useState('');
 
+  const defaultStart = "2020-03-15"
+  const defaultEnd = "2020-04-15"
+  const defaultdist = "Al"
+
   
   //sends start and end date to backend, gets list of dictionaries back for line graph
   const startEndDate = () => {
@@ -35,7 +39,7 @@ function App(){
 
   //sends start/end date and district to backend, gets list of dictionaries back for crime age bar graph. Overrides crimeagebar to update bar graph
   const startEndDatebga = () => {
-    Axios.get('http://localhost:5000/crimeagebargraphupdate', {params:{
+    Axios.get('http://localhost:5000/crimeagebargraph', {params:{
       startdatebga: startDatebga, 
       enddatebga: endDatebga,
       districtbga: districtbga}
@@ -46,27 +50,27 @@ function App(){
   })
   }
 
-  //Gets all coviddata from backend as a list of dictionaries to be graphed
+  //Gets default coviddata from backend as a list of dictionaries to be graphed
   useEffect(() => {
-    fetch("http://localhost:5000/").then(
-      res => res.json()
-    ).then(
-      data => {
-        setcoviddata(data)
-        console.log(data)
+    Axios.get("http://localhost:5000/covidlinegraph",{params:{
+      startdate: defaultStart, 
+      enddate: defaultEnd}
+      }).then((response) => {
+        setcoviddata(response.data)
+        console.log(response.data)
       }
     )
   },[]);
-
   
   //Gets default parametered crime data from backend as a list of dictionaries to be age bar graph (first 100 days, all districts) displays on page start
   useEffect(() => {
-    fetch("http://localhost:5000/crimebargraph").then(
-      res => res.json()
-    ).then(
-      data => {
-        setcrimeagebar(data)
-        console.log(data)
+    Axios.get("http://localhost:5000/crimeagebargraph",{params:{
+      startdatebga: defaultStart, 
+      enddatebga: defaultEnd,
+      districtbga: defaultdist}
+      }).then((response) => {
+        setcrimeagebar(response.data)
+        console.log(response.data)
       }
     )
   },[]);
@@ -113,22 +117,24 @@ function App(){
         <h3 id="lgraphtitle">Weekly Average Increase in COVID-19 cases </h3>
         <link rel="stylesheet" href="https://unpkg.com/react-vis/dist/style.css"></link>
 
-        <XYPlot xType="ordinal" width={1000} height={300}>
+        <FlexibleXYPlot height={400} xType="ordinal"  margin={{bottom: 100, left: 50, right: 10, top: 10}}>
           <HorizontalGridLines />
           <VerticalGridLines />
           <XAxis  title="Date" 
-            tickFormat={function tickFormat(d){return new Date(d).toLocaleDateString()}} 
+            tickLabelAngle={-90}
+            tickFormat={function tickFormat(currdate){return new Date(currdate).toLocaleDateString()}}
             attr="x" attrAxis="y" 
             orientation="bottom"/>
 
           <YAxis headLine title="1-Week Average Increase" />
 
+
           {/*Setting the data dictionary to be displayed*/}  
-          <LineSeries data={coviddata} />
+          <LineSeries data={coviddata}/>
 
-        </XYPlot>
+        </FlexibleXYPlot>
       </div>
-
+      
       {/*Crime age bar graph#################################################################################################### */}
       <form className='dateform'>
         
@@ -178,22 +184,18 @@ function App(){
         <link rel="stylesheet" href="https://unpkg.com/react-vis/dist/style.css"></link>
 
         <XYPlot xType="ordinal" width={1000} height={300}>
-          <HorizontalGridLines />
-          <VerticalGridLines />
+          <HorizontalGridLines/>
+          <VerticalGridLines/>
           <XAxis  title="Ages"/>
 
-          <YAxis headLine title="Count" />
+          <YAxis headLine title="Count"/>
 
           {/*Setting the data dictionary to be displayed. X is category, Y is #of occurences*/}  
           <VerticalBarSeries data={crimeagebar} />
-
+          
         </XYPlot>
       </div>
-
-
-
-
-      
+ 
 
     {/* test output for covid cases for reference when returning query dump
     <div>
