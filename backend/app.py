@@ -81,27 +81,6 @@ def parse_geodata(GeoLocation):
     GeoLocation = [float(x) for x in GeoLocation]
     return GeoLocation
 """
-
-######initial route for display all data. i.e graphs heatmap etc.###############        
-@app.route('/', methods=['GET'])
-def index():
-    all_covid = covidcase.query.all()
-    #query = covid_schema.dump(all_covid)
-    #all_crime = Crime.query.all()
-
-    #testing
-    rollingavg = []
-    #for x in all_covid:
-    i = 0
-    while i < len(all_covid): 
-        dict = {"x": all_covid[i].DATE, "y": all_covid[i].AVGIncrease}
-        #dict = {"x": i, "y": all_covid[i].AVGIncrease}
-        rollingavg.append(dict)
-        i+=1
-
-    return jsonify(rollingavg)
-    #return jsonify(query)
-    
     
 #Line graph for covid 1-week average
 @app.route('/covidlinegraph', methods=['GET'])
@@ -111,8 +90,8 @@ def dateslist():
     sdate = str(request.args.get("startdate"))
     edate = str(request.args.get("enddate"))
 
-    all_covid = covidcase.query.all()
-    #query = covid_schema.dump(all_covid)
+    #old query used
+    ##all_covid = covidcase.query.all()
 
 
     #converting user input from html calendar to DATETIME format to match query
@@ -124,6 +103,7 @@ def dateslist():
     sdate = datetime.strptime(sdate, '%Y/%m/%d %H:%M:%S+%f')
     edate = datetime.strptime(edate, '%Y/%m/%d %H:%M:%S+%f')
 
+    #Query based on datetime to get the DayNum range needed to be used
     startd = covidcase.query.filter_by(DATE = sdate).first()
     endd = covidcase.query.filter_by(DATE = edate).first()
 
@@ -138,10 +118,12 @@ def dateslist():
     i = startDayNum
     while i <= endDayNum:
         #adds dictionaries to the list, for x and y coordinate of each point on the graph (x as DATETIME format)
-        dict = {"x": str((all_covid[i-1].DATE))[0:10], "y": all_covid[i-1].AVGIncrease}
+        curr = covidcase.query.get(i)
+        dict = {"x": str((curr.DATE)), "y": curr.AVGIncrease}
 
-        #adds dictionaries to the list, for x and y coordinate of each point on the graph (x as DayNum int format)
-        #dict = {"x": i, "y": all_covid[i].AVGIncrease}
+        #old dictionary used when using all_covid query
+        #dict = {"x": str((all_covid[i-1].DATE))[0:10], "y": all_covid[i-1].AVGIncrease}
+
         rollingavg.append(dict)
         i+=1
 
@@ -150,71 +132,16 @@ def dateslist():
 
 
 
-#Default bar graph for criminal ages, default all districts and not all dates
-@app.route('/crimebargraph', methods=['GET'])
+#Default view and Updates bar graph for criminal ages with user input from form 
+@app.route('/crimeagebargraph', methods=['GET'])
 def agelist():
 
-    defaultstart = 1
-    defaultend = 100
-    
-    #list to keep track of counts in each category in ranges list
-    range_count = [0,0,0,0,0,0,0,0]
-    ranges = ["<20","20-25","26-35","36-50","51-60","61-69","70+", "NA"]
-    
-    #list holds dictionaries to be used as the bar graph's data 
-    crime_ages = []
-    i=defaultstart
-    while i < defaultend:
-        crime = Crime.query.get(i)
-        age = crime.Age
-
-        if(age < 20 and age > 0):
-            range_count[0] +=1
-
-        elif(age >= 20 and age <= 25):
-            range_count[1] +=1
-
-        elif(age >= 26 and age <=35):
-            range_count[2] +=1
-
-        elif(age >= 36 and age <= 50):
-            range_count[3] +=1
-
-        elif(age >= 51 and age <=60):
-            range_count[4] +=1
-
-        elif(age >= 61 and age <= 69):
-            range_count[5] +=1
-
-        elif(age >= 70):
-            range_count[6] +=1
-
-        #NA age
-        elif(age == 0): 
-            range_count[7] +=1
-
-        i+=1
-
-    q = 0
-    while q < len(range_count):
-        dict = {"x":ranges[q], "y": range_count[q]}
-       # print(dict)
-        crime_ages.append(dict)
-
-        q+=1
-
-    return crime_ages
-
-
-#Updates bar graph for criminal ages with user input from form 
-@app.route('/crimeagebargraphupdate', methods=['GET'])
-def agelistupdate():
 
     #gets user input for start/end date and district
     sdate = str(request.args.get("startdatebga"))
     edate = str(request.args.get("enddatebga"))
     district = str(request.args.get("districtbga"))
-
+    
     #format html calendar input into datetime to query matches
     sdate = datetime.strptime(sdate, '%Y-%m-%d')
     edate = datetime.strptime(edate, '%Y-%m-%d')
@@ -234,8 +161,6 @@ def agelistupdate():
     
     #list holds dictionaries to be used as the bar graph's data 
     crime_ages = []
-
-    #print(startRowID , " ", endRowID)
 
     #Get all districts
     if(district == "Al"):
@@ -273,7 +198,7 @@ def agelistupdate():
             i+=1
 
     #When a specific district has been selected
-    if(district != "Al"):
+    elif(district != "Al"):
         i=startRowID
         while i <= endRowID:
             crime = Crime.query.get(i)
