@@ -1,7 +1,7 @@
 import './App.css';
 import React,{useRef, useEffect, useState,setState} from 'react';
 import Axios from 'axios';
-import {XYPlot, XAxis, YAxis, HorizontalGridLines, VerticalGridLines, LineSeries, VerticalBarSeries,FlexibleXYPlot} from "react-vis";
+import {XYPlot, XAxis, YAxis, HorizontalGridLines, VerticalGridLines, LineSeries, VerticalBarSeries,FlexibleXYPlot,Hint} from "react-vis";
 
 
 function App(){
@@ -20,9 +20,14 @@ function App(){
   const [startDatebga, setStartDatebga] = useState('');
   const [districtbga, setdistrictbga] = useState('');
 
+  const [currval, setCurrval] = useState({});
+  const [currbarval, setCurrbarval] = useState({});
+
   const defaultStart = "2020-03-15"
   const defaultEnd = "2020-04-15"
   const defaultdist = "Al"
+
+  
 
   
   //sends start and end date to backend, gets list of dictionaries back for line graph
@@ -57,7 +62,7 @@ function App(){
       enddate: defaultEnd}
       }).then((response) => {
         setcoviddata(response.data)
-        console.log(response.data)
+        console.log(response.status)
       }
     )
   },[]);
@@ -70,9 +75,11 @@ function App(){
       districtbga: defaultdist}
       }).then((response) => {
         setcrimeagebar(response.data)
-        console.log(response.data)
+        console.log(response.status)
       }
-    )
+    ).catch(function (error) {
+      console.log("Error displaying default Crime Age Bar Graph. Page was refreshed before the queries in the backend could be completed.");
+    });
   },[]);
 
 
@@ -129,12 +136,30 @@ function App(){
           <YAxis headLine title="1-Week Average Increase" />
 
 
-          {/*Setting the data dictionary to be displayed*/}  
-          <LineSeries data={coviddata}/>
+          {/*Setting the data dictionary to be displayed({"x": date, "y": avgincrease}). Also setting currval to nearest point to cursor*/}  
+          <LineSeries data={coviddata} 
+
+            onNearestX={(value) =>  setCurrval(value)}
+            />
+
+
+          {/*Outputs data from currval*/}
+          <Hint value={currval} marginLeft={0} marginTop={0}>
+            <div className='hintprompt'>
+              <h3 className='hinttitle'>Date:</h3>
+              <p>{String(currval.x).slice(0,10)}</p>
+              <h3 className='hinttitle'>1-Week AVG Increase:</h3>
+              <p>{currval.y}</p>
+            </div>
+          </Hint>
 
         </FlexibleXYPlot>
+     
       </div>
       
+      
+
+
       {/*Crime age bar graph#################################################################################################### */}
       <form className='dateform'>
         
@@ -190,9 +215,17 @@ function App(){
 
           <YAxis headLine title="Count"/>
 
-          {/*Setting the data dictionary to be displayed. X is category, Y is #of occurences*/}  
-          <VerticalBarSeries data={crimeagebar} />
-          
+          {/*Setting the data dictionary to be displayed. X is category, Y is #of occurences ({"x": age-category, "y": #of occurences})*/}  
+          <VerticalBarSeries data={crimeagebar}
+           onNearestX={(value,{event}) =>  setCurrbarval(value)}/>
+
+          {/*Outputs data from currval*/}
+          <Hint value={currbarval} marginLeft={0} marginTop={0}>
+            <div className='hintprompt'>
+              <h3 className='hinttitle'>1-Week AVG Increase:</h3>
+              <p>{currbarval.y}</p>
+            </div>
+          </Hint>
         </XYPlot>
       </div>
  
