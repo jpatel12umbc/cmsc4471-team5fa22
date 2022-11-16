@@ -172,7 +172,6 @@ def agelist():
             if(age < 20 and age > 0):
                 range_count[0] +=1
 
-
             elif(age >= 20 and age <= 25):
                 range_count[1] +=1
 
