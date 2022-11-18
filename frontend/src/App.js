@@ -3,7 +3,6 @@ import React,{useRef, useEffect, useState,setState} from 'react';
 import Axios from 'axios';
 import {XYPlot, XAxis, YAxis, HorizontalGridLines, VerticalGridLines, LineSeries, VerticalBarSeries,FlexibleXYPlot,Hint} from "react-vis";
 
-
 function App(){
   
   //stores currently graphed covid weekly avg increase (the line graph)
@@ -23,6 +22,7 @@ function App(){
   const [currval, setCurrval] = useState({});
   const [currbarval, setCurrbarval] = useState({});
 
+  //default variables used for running graphs on website start up
   const defaultStart = "2020-03-15"
   const defaultEnd = "2020-04-15"
   const defaultdist = "Al"
@@ -32,6 +32,13 @@ function App(){
   
   //sends start and end date to backend, gets list of dictionaries back for line graph
   const startEndDate = () => {
+
+    //if no value for one or both start/end dates have not been entered, do not do anything
+    if(startDate === "" || endDate === ""){
+      console.log("User has not entered either a start date or end date (Covid line graph)")
+      alert("Please fill out every field")
+    }
+    else{
     Axios.get('http://localhost:5000/covidlinegraph', {params:{
       startdate: startDate, 
       enddate: endDate}
@@ -41,9 +48,17 @@ function App(){
       setcoviddata(response.data)
   })
   }
+  }
 
   //sends start/end date and district to backend, gets list of dictionaries back for crime age bar graph. Overrides crimeagebar to update bar graph
   const startEndDatebga = () => {
+
+    //if no value for one or both start/end dates or district have not been entered, do not do anything
+    if(startDatebga === "" || endDatebga === "" || districtbga === ""){
+      console.log("User has not entered either a start date, end date, or district (crime age bar graph)")
+      alert("Please fill out every field")
+    }
+    else{
     Axios.get('http://localhost:5000/crimeagebargraph', {params:{
       startdatebga: startDatebga, 
       enddatebga: endDatebga,
@@ -53,6 +68,7 @@ function App(){
       console.log(response.data)
       setcrimeagebar(response.data)
   })
+  }
   }
 
   //Gets default coviddata from backend as a list of dictionaries to be graphed
@@ -183,8 +199,9 @@ function App(){
          <label>District:</label>
         <select required type="" id="agedisctrict" name="district"
         onChange={(e) =>{
-          setdistrictbga(e.target.value)
+            setdistrictbga(e.target.value)
         }}>
+          <option value="" disabled selected>Select District</option>
           <option value="Al">All</option>
           <option value="N">Northern</option>
           <option value="S">Southern</option>
@@ -201,7 +218,6 @@ function App(){
         <input type="button" onClick={startEndDatebga} value="Submit"></input>
       </form>
       
-
       {/*Crime bar graph display*/}
       <div className='covidagebar'>
 
@@ -222,7 +238,7 @@ function App(){
           {/*Outputs data from currval*/}
           <Hint value={currbarval} marginLeft={0} marginTop={0}>
             <div className='hintprompt'>
-              <h3 className='hinttitle'>1-Week AVG Increase:</h3>
+              <h3 className='hinttitle'>Count:</h3>
               <p>{currbarval.y}</p>
             </div>
           </Hint>
