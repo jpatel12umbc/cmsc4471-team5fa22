@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request, render_template
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import between
 from flask_marshmallow import Marshmallow
 from flask_cors import CORS
 from datetime import datetime
@@ -90,9 +91,6 @@ def dateslist():
     sdate = str(request.args.get("startdate"))
     edate = str(request.args.get("enddate"))
 
-    #old query used
-    ##all_covid = covidcase.query.all()
-
 
     #converting user input from html calendar to DATETIME format to match query
     sdate = sdate.replace("-", "/")
@@ -103,12 +101,12 @@ def dateslist():
     sdate = datetime.strptime(sdate, '%Y/%m/%d %H:%M:%S+%f')
     edate = datetime.strptime(edate, '%Y/%m/%d %H:%M:%S+%f')
 
+
     #Query based on datetime to get the DayNum range needed to be used
     startd = covidcase.query.filter_by(DATE = sdate).first()
     endd = covidcase.query.filter_by(DATE = edate).first()
 
-    #print("test!", sdate , " " , startd.DayNum , " " , endd.DayNum)
-
+    #get range of daynums for while loop
     startDayNum = int(startd.DayNum)
     endDayNum = int(endd.DayNum)
 
@@ -121,13 +119,10 @@ def dateslist():
         curr = covidcase.query.get(i)
         dict = {"x": str((curr.DATE)), "y": curr.AVGIncrease}
 
-        #old dictionary used when using all_covid query
-        #dict = {"x": str((all_covid[i-1].DATE))[0:10], "y": all_covid[i-1].AVGIncrease}
-
         rollingavg.append(dict)
         i+=1
 
-    #returning value will override the coviddata variable (in App.js) to update the graph
+    #returning value will populate override the coviddata variable (in App.js) to update the graph
     return jsonify(rollingavg)
 
 
@@ -135,7 +130,6 @@ def dateslist():
 #Default view and Updates bar graph for criminal ages with user input from form 
 @app.route('/crimeagebargraph', methods=['GET'])
 def agelist():
-
 
     #gets user input for start/end date and district
     sdate = str(request.args.get("startdatebga"))
@@ -146,100 +140,65 @@ def agelist():
     sdate = datetime.strptime(sdate, '%Y-%m-%d')
     edate = datetime.strptime(edate, '%Y-%m-%d')
 
-    #gets first entry for given date to get its RowID
-    startd = Crime.query.filter_by(CrimeDate = sdate).first()
-
-    endtemp = Crime.query.filter_by(CrimeDate = edate).all()
-    endd = endtemp[len(endtemp)-1] #get last element of that day for its RowID
-
-    startRowID = int(startd.RowID)
-    endRowID = int(endd.RowID)
 
     #list to keep track of counts in each category in ranges list
     range_count = [0,0,0,0,0,0,0,0]
     ranges = ["<20","20-25","26-35","36-50","51-60","61-69","70+", "NA"]
     
+
+    #queries crime in specified district between start and end date
+    if(district != "Al"):
+        allcrime_timepd = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district)).all()
+    
+    #queries crime in ALL districts between start and end date
+    else:
+        allcrime_timepd = Crime.query.filter(Crime.CrimeDate.between(sdate,edate)).all()
+
     #list holds dictionaries to be used as the bar graph's data 
     crime_ages = []
 
-    #Get all districts
-    if(district == "Al"):
-        i=startRowID
-        while i <= endRowID:
-            crime = Crime.query.get(i)
-            age = crime.Age
+    #Increment appropriate age range
+    i=0
+    while i <= len(allcrime_timepd)-1:
+        crime = allcrime_timepd[i]
+        age = crime.Age
 
-            if(age < 20 and age > 0):
-                range_count[0] +=1
+        if(age < 20 and age > 0):
+            range_count[0] +=1
+        
+        elif(age >= 20 and age <= 25):
+            range_count[1] +=1
 
-            elif(age >= 20 and age <= 25):
-                range_count[1] +=1
+        elif(age >= 26 and age <=35):
+            range_count[2] +=1
 
-            elif(age >= 26 and age <=35):
-                range_count[2] +=1
+        elif(age >= 36 and age <= 50):
+            range_count[3] +=1
 
-            elif(age >= 36 and age <= 50):
-                range_count[3] +=1
+        elif(age >= 51 and age <=60):
+            range_count[4] +=1
 
-            elif(age >= 51 and age <=60):
-                range_count[4] +=1
+        elif(age >= 61 and age <= 69):
+            range_count[5] +=1
 
-            elif(age >= 61 and age <= 69):
-                range_count[5] +=1
+        elif(age >= 70):
+            range_count[6] +=1
 
-            elif(age >= 70):
-                range_count[6] +=1
+        #NA age
+        elif(age == 0): 
+            range_count[7] +=1
 
-            #NA age
-            elif(age == 0): 
-                range_count[7] +=1
+        i+=1
 
-            i+=1
-
-    #When a specific district has been selected
-    elif(district != "Al"):
-        i=startRowID
-        while i <= endRowID:
-            crime = Crime.query.get(i)
-            if(crime.District == district):
-                age = crime.Age
-
-                if(age < 20 and age > 0):
-                    range_count[0] +=1
-
-
-                elif(age >= 20 and age <= 25):
-                    range_count[1] +=1
-
-                elif(age >= 26 and age <=35):
-                    range_count[2] +=1
-
-                elif(age >= 36 and age <= 50):
-                    range_count[3] +=1
-
-                elif(age >= 51 and age <=60):
-                    range_count[4] +=1
-
-                elif(age >= 61 and age <= 69):
-                    range_count[5] +=1
-
-                elif(age >= 70):
-                    range_count[6] +=1
-
-                #NA age
-                elif(age == 0): 
-                    range_count[7] +=1
-
-            i+=1
-
+    #create dictionary of list of counts per age range
     q = 0
     while q < len(range_count):
         dict = {"x":ranges[q], "y": range_count[q]}
-        #print(dict)
         crime_ages.append(dict)
 
         q+=1
 
+    #returning value will populate or override the crimeagebar variable (in App.js) to update the bar graph
     return crime_ages
     
 
