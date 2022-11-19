@@ -2,6 +2,10 @@ import './App.css';
 import React,{useRef, useEffect, useState,setState} from 'react';
 import Axios from 'axios';
 import {XYPlot, XAxis, YAxis, HorizontalGridLines, VerticalGridLines, LineSeries, VerticalBarSeries,FlexibleXYPlot,Hint} from "react-vis";
+import { MapContainer, TileLayer, Map, Marker, Popup, ZoomControl} from 'react-leaflet'
+import '../node_modules/leaflet/dist/leaflet.css'
+import {HeatmapLayer} from "react-leaflet-heatmap-layer-v3/lib";
+
 
 function App(){
   
@@ -19,13 +23,21 @@ function App(){
   const [startDatebga, setStartDatebga] = useState('');
   const [districtbga, setdistrictbga] = useState('');
 
+  //stores start and end date for heatmap
+  const [startDateheat, setStartDateheat] = useState('');
+  const [endDateheat, setEndDateheat] = useState('');
+
+  //values used to store Hint data (for prompt when mousing over graphs)
   const [currval, setCurrval] = useState({});
   const [currbarval, setCurrbarval] = useState({});
+
+
 
   //default variables used for running graphs on website start up
   const defaultStart = "2020-03-15"
   const defaultEnd = "2020-04-15"
-  const defaultdist = "Al"
+  const defaultdist = "Al" //Al for ALL disctricts
+  const Baltimore_position = [39.2904,-76.6122]
 
   
 
@@ -42,12 +54,12 @@ function App(){
     Axios.get('http://localhost:5000/covidlinegraph', {params:{
       startdate: startDate, 
       enddate: endDate}
-    } ).then((response) => {
+    }).then((response) => {
       //Overrides stored data in coviddata variable
       console.log(response.data)
       setcoviddata(response.data)
-  })
-  }
+      })
+    }
   }
 
   //sends start/end date and district to backend, gets list of dictionaries back for crime age bar graph. Overrides crimeagebar to update bar graph
@@ -67,8 +79,8 @@ function App(){
       //Overrides stored data in crimeagebar variable
       console.log(response.data)
       setcrimeagebar(response.data)
-  })
-  }
+      })
+    }
   }
 
   //Gets default coviddata from backend as a list of dictionaries to be graphed
@@ -79,8 +91,7 @@ function App(){
       }).then((response) => {
         setcoviddata(response.data)
         console.log(response.status)
-      }
-    )
+      })
   },[]);
   
   //Gets default parametered crime data from backend as a list of dictionaries to be age bar graph (first 100 days, all districts) displays on page start
@@ -93,14 +104,49 @@ function App(){
         setcrimeagebar(response.data)
         console.log(response.status)
       }
-    ).catch(function (error) {
+      ).catch(function (error) {
       console.log("Error displaying default Crime Age Bar Graph. Page was refreshed before the queries in the backend could be completed.");
-    });
+      });
   },[]);
 
 
+  //testing leaflet / leaflet-react
+  const [heatmap, setheatmap] = useState([]);
+
+  useEffect(() => {
+    Axios.get("http://localhost:5000/heatmapmarkers", {params:{
+      startdateheat: defaultStart, 
+      enddateheat: defaultEnd}}
+      ).then((response) => {
+        setheatmap(response.data)
+        console.log(response.status)
+      }
+    )
+  },[]);
+
+  const startEndDateheat = () =>{
+
+    //if no value for one or both start/end dates have not been entered, do not do anything
+    if(startDateheat === "" || endDateheat === ""){
+      console.log("User has not entered either a start date or end date (HeatMap)")
+      alert("Please fill out every field")
+    }
+    else{
+    Axios.get('http://localhost:5000/heatmapmarkers', {params:{
+      startdateheat: startDateheat, 
+      enddateheat: endDateheat}
+      }).then((response) => {
+      //Overrides stored data in coviddata variable
+      console.log(response.data)
+      setheatmap(response.data)
+      })
+    }
+
+  }
+
 
   return (
+    
     <div className="App">
       <header className="App-header">
 
@@ -108,6 +154,59 @@ function App(){
       <p className="name_size">By: Christopher Carnahan, Kevin Mensah, Josef Obitz, Jil Patel, Dillon Ward</p> 
       </header>
       
+
+      {/*Heatmap form*/}
+      <form className='dateform'>
+
+        {/*Gets user input from calendar, stores in startDateheat variable*/}
+        <label>Start Date:</label>
+        <input required type="date" id="start" name="date-start" 
+        min="2020-03-15" max="2021-09-30"
+        onChange={(e) =>{
+          setStartDateheat(e.target.value)
+        }}></input>
+        
+        {/*Gets user input from calendar, stores in endDateheat variable*/}
+        <label>End Date:</label>
+        <input required type="date" id="end" name="date-end"
+        min="2020-03-15" max="2021-09-30"
+        onChange={(e) =>{
+          setEndDateheat(e.target.value)
+        }}></input>
+
+        {/*Form submit button (KEEP AS TYPE button! breaks otherwise)*/ }
+        <input type="button" onClick={startEndDateheat} value="Submit"></input>
+      </form>
+
+      
+  
+      {/* Title heatmap*/}
+      <h3 id="lgraphtitle">Baltimore City Violent Crime </h3>
+
+      {/*Leaflet-react Map with heatmap layer */}
+      <div className="heatmap">
+        {/*Create Map*/}
+        <MapContainer center={Baltimore_position} zoom={12} scrollWheelZoom={true} zoomControl={false}> 
+
+          {/*Heatmap controls
+            points takes in a 2-D list; each row contains [latitude,longitude,marker-intensity]*/}
+          <HeatmapLayer
+              minOpacity={.00001}
+              points={heatmap}
+              longitudeExtractor={m => m[1]}
+              latitudeExtractor={m => m[0]}
+              intensityExtractor={m => parseFloat(m[2])} />          
+
+
+          {/*Map being pulled from the internet and used */}
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
+
+          <ZoomControl position='topright'/>
+        </MapContainer>
+      </div>  
+
 
       {/*Covid line graph#################################################################################################### */}
       <form className='dateform'>
