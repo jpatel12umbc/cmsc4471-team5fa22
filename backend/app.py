@@ -202,6 +202,33 @@ def agelist():
     return crime_ages
     
 
+
+@app.route('/heatmapmarkers', methods=['GET'])
+def heatmapmarkers():
+
+    sdate = str(request.args.get("startdateheat"))
+    edate = str(request.args.get("enddateheat"))
+
+    #format html calendar input into datetime to query matches
+    sdate = datetime.strptime(sdate, '%Y-%m-%d')
+    edate = datetime.strptime(edate, '%Y-%m-%d')
+
+    #Queries all crime committed between two dates given by user
+    crime_test = Crime.query.filter(Crime.CrimeDate.between(sdate,edate)).all()
+
+    #2-D list. Each row is a pair of latitude, logitude, and intensity of the marker
+    crime_list = []
+
+    q = 0
+    while q <= len(crime_test)-1:   
+
+        #has to be sent in format [Lat,Long,Intensity]     
+        crime_list.append([crime_test[q].Latitude,crime_test[q].Longitude,"0.00001"])
+        q+=1
+    
+    return crime_list
+
+
 ###############################################################################################################################
 
 ####update for when user changes a startdate, end date and or location for covid data##########
