@@ -27,6 +27,7 @@ function App(){
   const [startDateheat, setStartDateheat] = useState('');
   const [endDateheat, setEndDateheat] = useState('');
 
+  
   //values used to store Hint data covid line graph (for prompt when mousing over graphs)
   const [currval, setCurrval] = useState({});
   //Used for covid line graph. Used to set the current x and y to be displayed in graph and sets what css classname to have (used to hide hint when mouse leaves graph)
@@ -45,8 +46,6 @@ function App(){
     setcrimeagehintstyle(cssClassname)
   }
 
-
-
   //default variables used for running graphs on website start up
   const defaultStart = "2020-03-15"
   const defaultEnd = "2020-04-15"
@@ -58,9 +57,13 @@ function App(){
   
   //sends start and end date to backend, gets list of dictionaries back for line graph
   const startEndDate = () => {
-
+    //checking if valid end and start date
+    if(endDate < startDate){
+      console.log("User entered invalid start and end dates")
+      alert("End date needs to be greater than Start Date")
+    }
     //if no value for one or both start/end dates have not been entered, do not do anything
-    if(startDate === "" || endDate === ""){
+    else if(startDate === "" || endDate === ""){
       console.log("User has not entered either a start date or end date (Covid line graph)")
       alert("Please fill out every field")
     }
@@ -78,9 +81,13 @@ function App(){
 
   //sends start/end date and district to backend, gets list of dictionaries back for crime age bar graph. Overrides crimeagebar to update bar graph
   const startEndDatebga = () => {
-
+    //checking if valid end and start date
+    if(endDatebga < startDatebga){
+      console.log("User entered invalid start and end dates")
+      alert("End date needs to be greater than Start Date")
+    }
     //if no value for one or both start/end dates or district have not been entered, do not do anything
-    if(startDatebga === "" || endDatebga === "" || districtbga === ""){
+    else if(startDatebga === "" || endDatebga === "" || districtbga === ""){
       console.log("User has not entered either a start date, end date, or district (crime age bar graph)")
       alert("Please fill out every field")
     }
@@ -139,9 +146,13 @@ function App(){
   },[]);
 
   const startEndDateheat = () =>{
-
+    //checking if valid end and start date
+    if(endDateheat < startDateheat){
+      console.log("User entered invalid start and end dates")
+      alert("End date needs to be greater than Start Date")
+    }
     //if no value for one or both start/end dates have not been entered, do not do anything
-    if(startDateheat === "" || endDateheat === ""){
+    else if(startDateheat === "" || endDateheat === ""){
       console.log("User has not entered either a start date or end date (HeatMap)")
       alert("Please fill out every field")
     }
@@ -223,7 +234,7 @@ function App(){
 
 
       {/*Covid line graph#################################################################################################### */}
-      <form className='dateform'>
+      <form className='dateformcov'>
       
         {/*Gets user input from calendar, stores in startDate variable*/}
         <label>Start Date:</label>
@@ -289,7 +300,7 @@ function App(){
 
 
       {/*Crime age bar graph#################################################################################################### */}
-      <form className='dateform'>
+      <form className='dateformcrime'>
         
         {/*Gets user input from calendar, stores in startDatebga variable*/}
         <label>Start Date:</label>
@@ -313,7 +324,7 @@ function App(){
         onChange={(e) =>{
             setdistrictbga(e.target.value)
         }}>
-          <option value="" disabled selected>Select District</option>
+          <option value=""  defaultValue={""} >Select District</option>
           <option value="Al">All</option>
           <option value="N">Northern</option>
           <option value="S">Southern</option>
@@ -333,7 +344,7 @@ function App(){
       {/*Crime bar graph display*/}
       <div className='covidagebar'>
 
-        <h3 id="lgraphtitle">Criminal Ages </h3>
+        <h4 id="lgraphtitle">Criminal Ages </h4>
         <link rel="stylesheet" href="https://unpkg.com/react-vis/dist/style.css"></link>
 
         <XYPlot xType="ordinal" width={1000} height={300} onMouseLeave={(value)=>setcrimeagehintstyle("hidehint")}>
