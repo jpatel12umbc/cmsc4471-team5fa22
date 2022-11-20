@@ -27,9 +27,23 @@ function App(){
   const [startDateheat, setStartDateheat] = useState('');
   const [endDateheat, setEndDateheat] = useState('');
 
-  //values used to store Hint data (for prompt when mousing over graphs)
+  //values used to store Hint data covid line graph (for prompt when mousing over graphs)
   const [currval, setCurrval] = useState({});
+  //Used for covid line graph. Used to set the current x and y to be displayed in graph and sets what css classname to have (used to hide hint when mouse leaves graph)
+  const [covidlhintstyle,setcovidlhintstyle] = useState('');
+  const hinthandlecovidl = (val,cssClassname)=>{
+    setCurrval(val)
+    setcovidlhintstyle(cssClassname)
+  }
+
+  //values used to store Hint data crimeage graph (for prompt when mousing over graphs)
   const [currbarval, setCurrbarval] = useState({});
+  //Used for age crime bargraph. Used to set the current x and y to be displayed in graph and sets what css classname to have (used to hide hint when mouse leaves graph)
+  const [crimeagehintstyle,setcrimeagehintstyle] = useState('');
+  const hinthandlecrimeage = (val,cssClassname)=>{
+    setCurrbarval(val)
+    setcrimeagehintstyle(cssClassname)
+  }
 
 
 
@@ -239,7 +253,7 @@ function App(){
         <h3 id="lgraphtitle">Weekly Average Increase in COVID-19 cases </h3>
         <link rel="stylesheet" href="https://unpkg.com/react-vis/dist/style.css"></link>
 
-        <FlexibleXYPlot height={400} xType="ordinal"  margin={{bottom: 100, left: 50, right: 10, top: 10}}>
+        <FlexibleXYPlot height={400} xType="ordinal"  margin={{bottom: 100, left: 50, right: 10, top: 10}} onMouseLeave={(value)=>setcovidlhintstyle("hidehint")}>
           <HorizontalGridLines />
           <VerticalGridLines />
           <XAxis  title="Date" 
@@ -251,16 +265,15 @@ function App(){
           <YAxis headLine title="1-Week Average Increase" />
 
 
-          {/*Setting the data dictionary to be displayed({"x": date, "y": avgincrease}). Also setting currval to nearest point to cursor*/}  
+          {/*Setting the data dictionary to be displayed({"x": date, "y": avgincrease}). Also setting currval to nearest point to cursor and sets css class to display*/}  
           <LineSeries data={coviddata} 
-
-            onNearestX={(value) =>  setCurrval(value)}
+            onNearestX={(value) =>  hinthandlecovidl(value,"hintprompt")}
             />
 
 
           {/*Outputs data from currval*/}
           <Hint value={currval} marginLeft={0} marginTop={0}>
-            <div className='hintprompt'>
+            <div className={covidlhintstyle}>
               <h3 className='hinttitle'>Date:</h3>
               <p>{String(currval.x).slice(0,10)}</p>
               <h3 className='hinttitle'>1-Week AVG Increase:</h3>
@@ -323,20 +336,21 @@ function App(){
         <h3 id="lgraphtitle">Criminal Ages </h3>
         <link rel="stylesheet" href="https://unpkg.com/react-vis/dist/style.css"></link>
 
-        <XYPlot xType="ordinal" width={1000} height={300}>
+        <XYPlot xType="ordinal" width={1000} height={300} onMouseLeave={(value)=>setcrimeagehintstyle("hidehint")}>
           <HorizontalGridLines/>
           <VerticalGridLines/>
           <XAxis  title="Ages"/>
 
           <YAxis headLine title="Count"/>
 
-          {/*Setting the data dictionary to be displayed. X is category, Y is #of occurences ({"x": age-category, "y": #of occurences})*/}  
+          {/*Setting the data dictionary to be displayed. X is category, Y is #of occurences ({"x": age-category, "y": #of occurences})
+          Cursor will change displayed hint value and set correct css style to not be hidden*/}  
           <VerticalBarSeries data={crimeagebar}
-           onNearestX={(value,{event}) =>  setCurrbarval(value)}/>
+            onNearestX={(value) => hinthandlecrimeage(value,"hintprompt")}/>
 
           {/*Outputs data from currval*/}
           <Hint value={currbarval} marginLeft={0} marginTop={0}>
-            <div className='hintprompt'>
+            <div className={crimeagehintstyle}>
               <h3 className='hinttitle'>Count:</h3>
               <p>{currbarval.y}</p>
             </div>

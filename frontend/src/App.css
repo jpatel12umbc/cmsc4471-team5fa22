@@ -33,4 +33,12 @@
 .hinttitle{
   color: aquamarine;
 }
+.hidehint{
+  display: none;
+}
+
+.heatmap{
+  display: flex;
+  justify-content: center;
+}
 
