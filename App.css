@@ -1,0 +1,81 @@
+.App {
+  text-align: center;
+  background-color: black;
+}
+
+
+.App-header {
+  background-color: #282c34;
+  min-height: 20vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.name_size{
+  font-size: medium;
+}
+#map { height: 180px; }
+
+.leaflet-container{
+  text-align: center;
+  height: 50vh;
+  width: 50vw;
+}
+
+.hintprompt{
+  background-color: rgba(0, 0, 0, 0.75);
+  border-radius: 10px;
+  color: white;
+}
+.hinttitle{
+  color: aquamarine;
+}
+.hidehint{
+  display: none;
+}
+
+.heatmap{
+  display: flex;
+  justify-content: center;
+}
+
+h3{
+  text-align: left;
+  text-indent: 15%;
+  color: black;
+
+}
+
+h4{
+  text-align: center;
+  color: rgb(65, 219, 57);
+}
+
+.dateformcov{
+  text-align: left;
+  text-indent: 15%;
+  background-color: rgb(0, 191, 255);
+}
+
+.dateformcrime{
+  text-align: left;
+  text-indent: 0%;
+  background-color: rgb(255, 47, 0);
+  width: 569px;
+ 
+}
+
+.covidagebar{
+  background-color: rgb(55, 0, 255);
+  width: 500px;
+  height: 400px;
+  border: 15px solid blue;
+}
+
+.covidlgraph{
+  background-color: rgb(230, 0, 255);
+}
