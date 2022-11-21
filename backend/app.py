@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from flask import Flask, jsonify, request, render_template
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import between
@@ -8,8 +9,9 @@ import pymysql
 pymysql.install_as_MySQLdb()
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:1234@localhost:3306/crimecovid'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:jpatel0212@localhost/crimecovid'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 
 db = SQLAlchemy(app)
 db.init_app(app)
@@ -76,6 +78,17 @@ class Crime(db.Model):
         self.Latitude = Latitude
         self.Longitude = Longitude
 
+#creates weapons table
+class Weapons(db.Model):
+    WeaponID = db.Column(db.Integer, primary_key = True)
+    Weapons = db.Column(db.String(30))
+
+    def __init__(self, WeapongID, Weapons):
+        self.WeaponID = WeapongID
+        self.Weapons = Weapons
+    
+
+
 """
 def parse_geodata(GeoLocation):
     GeoLocation = GeoLocation.strip('()').split(',')
@@ -84,6 +97,7 @@ def parse_geodata(GeoLocation):
 """
     
 #Line graph for covid 1-week average
+
 @app.route('/covidlinegraph', methods=['GET'])
 def dateslist():
 
