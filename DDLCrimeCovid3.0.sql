@@ -19,7 +19,7 @@ create table if not exists `Weapon`(
 drop table if exists `CovidCase`;
 create table if not exists `CovidCase`(
 	`DayNum` smallint,
-	`Date` date,
+	`Date` datetime,
 	`TotalCases` mediumint,
 	`DailyIncrease` smallint,
 	`AvgIncrease` smallint,
@@ -30,7 +30,7 @@ drop table if exists `Crime`;
 create table if not exists `Crime`(
 	`RowID` mediumint,
 	`DayNum` smallint,
-	`CrimeDate` date,
+	`CrimeDate` datetime,
 	`CrimeCode` varchar(4),
 	`WeaponID` tinyint,
 	`Gender` char,
