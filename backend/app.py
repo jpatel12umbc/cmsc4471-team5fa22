@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from flask import Flask, jsonify, request, render_template
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import between
@@ -9,9 +8,8 @@ import pymysql
 pymysql.install_as_MySQLdb()
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:jpatel0212@localhost/crimecovid'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:1234@localhost:3306/crimecovid'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
 
 db = SQLAlchemy(app)
 db.init_app(app)
@@ -86,8 +84,6 @@ class Weapons(db.Model):
     def __init__(self, WeapongID, Weapons):
         self.WeaponID = WeapongID
         self.Weapons = Weapons
-    
-
 
 """
 def parse_geodata(GeoLocation):
@@ -97,7 +93,6 @@ def parse_geodata(GeoLocation):
 """
     
 #Line graph for covid 1-week average
-
 @app.route('/covidlinegraph', methods=['GET'])
 def dateslist():
 
@@ -222,13 +217,19 @@ def heatmapmarkers():
 
     sdate = str(request.args.get("startdateheat"))
     edate = str(request.args.get("enddateheat"))
+    district = str(request.args.get("districtheat"))
 
     #format html calendar input into datetime to query matches
     sdate = datetime.strptime(sdate, '%Y-%m-%d')
     edate = datetime.strptime(edate, '%Y-%m-%d')
 
-    #Queries all crime committed between two dates given by user
-    crime_test = Crime.query.filter(Crime.CrimeDate.between(sdate,edate)).all()
+    #Queries all crime committed between two dates and a specific district given by user
+    if(district != "Al"):
+        crime_test = Crime.query.filter(Crime.CrimeDate.between(sdate,edate),Crime.District.like(district)).all()
+    #Queries all crime committed between two dates given by user for ALL districts
+    else:
+        crime_test = Crime.query.filter(Crime.CrimeDate.between(sdate,edate)).all()
+
 
     #2-D list. Each row is a pair of latitude, logitude, and intensity of the marker
     crime_list = []
