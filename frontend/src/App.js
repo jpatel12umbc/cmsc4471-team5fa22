@@ -23,9 +23,10 @@ function App(){
   const [startDatebga, setStartDatebga] = useState('');
   const [districtbga, setdistrictbga] = useState('');
 
-  //stores start and end date for heatmap
+  //stores start/end date and selected district for heatmap
   const [startDateheat, setStartDateheat] = useState('');
   const [endDateheat, setEndDateheat] = useState('');
+  const [districtheat, setdistrictheat] = useState('');
 
   
   //values used to store Hint data covid line graph (for prompt when mousing over graphs)
@@ -68,7 +69,7 @@ function App(){
       alert("Please fill out every field")
     }
     else{
-    Axios.get('http://localhost:5000/covidlinegraph', {params:{
+    Axios.get('http://127.0.0.1:5000/covidlinegraph', {params:{
       startdate: startDate, 
       enddate: endDate}
     }).then((response) => {
@@ -92,7 +93,7 @@ function App(){
       alert("Please fill out every field")
     }
     else{
-    Axios.get('http://localhost:5000/crimeagebargraph', {params:{
+    Axios.get('http://127.0.0.1:5000/crimeagebargraph', {params:{
       startdatebga: startDatebga, 
       enddatebga: endDatebga,
       districtbga: districtbga}
@@ -106,7 +107,7 @@ function App(){
 
   //Gets default coviddata from backend as a list of dictionaries to be graphed
   useEffect(() => {
-    Axios.get("http://localhost:5000/covidlinegraph",{params:{
+    Axios.get("http://127.0.0.1:5000/covidlinegraph",{params:{
       startdate: defaultStart, 
       enddate: defaultEnd}
       }).then((response) => {
@@ -117,7 +118,7 @@ function App(){
   
   //Gets default parametered crime data from backend as a list of dictionaries to be age bar graph (first 100 days, all districts) displays on page start
   useEffect(() => {
-    Axios.get("http://localhost:5000/crimeagebargraph",{params:{
+    Axios.get("http://127.0.0.1:5000/crimeagebargraph",{params:{
       startdatebga: defaultStart, 
       enddatebga: defaultEnd,
       districtbga: defaultdist}
@@ -134,17 +135,20 @@ function App(){
   //testing leaflet / leaflet-react
   const [heatmap, setheatmap] = useState([]);
 
+  //Sets default heatmap for default dates and all districts to be displayed
   useEffect(() => {
-    Axios.get("http://localhost:5000/heatmapmarkers", {params:{
+    Axios.get("http://127.0.0.1:5000/heatmapmarkers", {params:{
       startdateheat: defaultStart, 
-      enddateheat: defaultEnd}}
-      ).then((response) => {
+      enddateheat: defaultEnd,
+      districtheat: defaultdist}
+    }).then((response) => {
         setheatmap(response.data)
         console.log(response.status)
       }
     )
   },[]);
 
+  //Updates heatmap variable with new parameters, will change currently displayed heatmap.
   const startEndDateheat = () =>{
     //checking if valid end and start date
     if(endDateheat < startDateheat){
@@ -152,14 +156,15 @@ function App(){
       alert("End date needs to be greater than Start Date")
     }
     //if no value for one or both start/end dates have not been entered, do not do anything
-    else if(startDateheat === "" || endDateheat === ""){
+    else if(startDateheat === "" || endDateheat === "" || districtheat === ""){
       console.log("User has not entered either a start date or end date (HeatMap)")
       alert("Please fill out every field")
     }
     else{
-    Axios.get('http://localhost:5000/heatmapmarkers', {params:{
+    Axios.get('http://127.0.0.1:5000/heatmapmarkers', {params:{
       startdateheat: startDateheat, 
-      enddateheat: endDateheat}
+      enddateheat: endDateheat,
+      districtheat: districtheat}
       }).then((response) => {
       //Overrides stored data in coviddata variable
       console.log(response.data)
@@ -198,6 +203,25 @@ function App(){
         onChange={(e) =>{
           setEndDateheat(e.target.value)
         }}></input>
+
+        {/*Gets user input from list for district, stores in districtheat variable*/}
+        <label>District:</label>
+        <select required type="" id="agedisctrict" name="district"
+        onChange={(e) =>{
+            setdistrictheat(e.target.value)
+        }}>
+          <option value=""  defaultValue={""} >Select District</option>
+          <option value="Al">All</option>
+          <option value="N">Northern</option>
+          <option value="S">Southern</option>
+          <option value="E">Eastern</option>
+          <option value="W">Western</option>
+          <option value="NE">NorthEastern</option>
+          <option value="NW">NorthWestern</option>
+          <option value="SE">SouthEaster</option>
+          <option value="SW">SouthWestern</option>
+          <option value="C">Central</option>
+        </select>
 
         {/*Form submit button (KEEP AS TYPE button! breaks otherwise)*/ }
         <input type="button" onClick={startEndDateheat} value="Submit"></input>
@@ -347,7 +371,7 @@ function App(){
         <h4 id="lgraphtitle">Criminal Ages </h4>
         <link rel="stylesheet" href="https://unpkg.com/react-vis/dist/style.css"></link>
 
-        <XYPlot xType="ordinal" width={1000} height={300} onMouseLeave={(value)=>setcrimeagehintstyle("hidehint")}>
+        <FlexibleXYPlot xType="ordinal" width={1000} height={300} onMouseLeave={(value)=>setcrimeagehintstyle("hidehint")}>
           <HorizontalGridLines/>
           <VerticalGridLines/>
           <XAxis  title="Ages"/>
@@ -366,7 +390,7 @@ function App(){
               <p>{currbarval.y}</p>
             </div>
           </Hint>
-        </XYPlot>
+        </FlexibleXYPlot>
       </div>
  
 
