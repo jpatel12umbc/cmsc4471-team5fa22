@@ -22,6 +22,7 @@ function App(){
   const [endDatebga, setEndDatebga] = useState('');
   const [startDatebga, setStartDatebga] = useState('');
   const [districtbga, setdistrictbga] = useState('');
+  const [weaponbga, setweaponbga] = useState('');
 
   //stores start/end date and selected district for heatmap
   const [startDateheat, setStartDateheat] = useState('');
@@ -87,8 +88,8 @@ function App(){
       console.log("User entered invalid start and end dates")
       alert("End date needs to be greater than Start Date")
     }
-    //if no value for one or both start/end dates or district have not been entered, do not do anything
-    else if(startDatebga === "" || endDatebga === "" || districtbga === ""){
+    //if no value for one or both start/end dates or district or weapon have not been entered, do not do anything
+    else if(startDatebga === "" || endDatebga === "" || districtbga === "" || weaponbga === ""){
       console.log("User has not entered either a start date, end date, or district (crime age bar graph)")
       alert("Please fill out every field")
     }
@@ -96,7 +97,8 @@ function App(){
     Axios.get('http://127.0.0.1:5000/crimeagebargraph', {params:{
       startdatebga: startDatebga, 
       enddatebga: endDatebga,
-      districtbga: districtbga}
+      districtbga: districtbga,
+      weaponbga: weaponbga}
     } ).then((response) => {
       //Overrides stored data in crimeagebar variable
       console.log(response.data)
@@ -206,7 +208,7 @@ function App(){
 
         {/*Gets user input from list for district, stores in districtheat variable*/}
         <label>District:</label>
-        <select required type="" id="agedisctrict" name="district"
+        <select required type="" id="agedisctrictheat" name="district"
         onChange={(e) =>{
             setdistrictheat(e.target.value)
         }}>
@@ -359,6 +361,35 @@ function App(){
           <option value="SE">SouthEaster</option>
           <option value="SW">SouthWestern</option>
           <option value="C">Central</option>
+        </select>
+
+        {/*Gets user input from list for weapon, stores in weaponbga variable*/}
+        <label>District:</label>
+        <select required type="" id="agedisctrict" name="district"
+        onChange={(e) =>{
+            setweaponbga(e.target.value)
+        }}>
+          <option value=""  defaultValue={""} >Select Weapon</option>
+          <option value="Al">All</option>
+          <option value="1">None</option>
+          <option value="2">Other</option>
+          <option value="3">Firearm</option>
+          <option value="4">Knife</option>
+          <option value="5">Hands</option>
+          <option value="6">Personal Weapon</option>
+          <option value="7">Fire</option>
+          <option value="8">Cutting instrument</option>
+          <option value="9">Blunt Object</option>
+          <option value="10">Motor Vehicle</option>
+          <option value="11">Drugs,Narcotics,Sleeping pills</option>
+          <option value="12">Unknown</option>
+          <option value="13">Other (Firearm)</option>
+          <option value="14">Handgun</option>
+          <option value="15">Automatic Handgun</option>
+          <option value="16">Asphyxiation</option>
+          <option value="17">Rifle</option>
+          <option value="18">Shotgun</option>
+
         </select>
 
         {/*Form submit button (KEEP AS TYPE button! breaks otherwise)*/ }
