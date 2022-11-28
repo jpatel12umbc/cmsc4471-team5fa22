@@ -144,6 +144,7 @@ def agelist():
     sdate = str(request.args.get("startdatebga"))
     edate = str(request.args.get("enddatebga"))
     district = str(request.args.get("districtbga"))
+    weapon= str(request.args.get("weaponbga"))
     
     #format html calendar input into datetime to query matches
     sdate = datetime.strptime(sdate, '%Y-%m-%d')
@@ -157,11 +158,25 @@ def agelist():
 
     #queries crime in specified district between start and end date
     if(district != "Al"):
-        allcrime_timepd = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district)).all()
     
+        #if specific distric and weapon
+        if(weapon != "Al"):
+            allcrime_timepd = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district), Crime.Weapon.like(weapon)).all()
+    
+        #if specific district but all weapon
+        else:
+            allcrime_timepd = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district)).all()
+
+
     #queries crime in ALL districts between start and end date
     else:
-        allcrime_timepd = Crime.query.filter(Crime.CrimeDate.between(sdate,edate)).all()
+        #if all districts and choses specific weapon
+        if(weapon !="Al"):
+            allcrime_timepd = Crime.query.filter(Crime.CrimeDate.between(sdate,edate),Crime.Weapon.like(weapon)).all()
+
+        #if all district and all weapons
+        else:   
+            allcrime_timepd = Crime.query.filter(Crime.CrimeDate.between(sdate,edate)).all()
 
     #list holds dictionaries to be used as the bar graph's data 
     crime_ages = []
