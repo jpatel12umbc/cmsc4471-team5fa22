@@ -81,8 +81,8 @@ class Weapons(db.Model):
     WeaponID = db.Column(db.Integer, primary_key = True)
     Weapons = db.Column(db.String(30))
 
-    def __init__(self, WeapongID, Weapons):
-        self.WeaponID = WeapongID
+    def __init__(self, WeaponID, Weapons):
+        self.WeaponID = WeaponID
         self.Weapons = Weapons
 
 """
