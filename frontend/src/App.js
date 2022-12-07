@@ -28,6 +28,7 @@ function App(){
   const [startDateheat, setStartDateheat] = useState('');
   const [endDateheat, setEndDateheat] = useState('');
   const [districtheat, setdistrictheat] = useState('');
+  const [weaponheat, setweaponheat] = useState('');
 
   
   //values used to store Hint data covid line graph (for prompt when mousing over graphs)
@@ -52,6 +53,7 @@ function App(){
   const defaultStart = "2020-03-15"
   const defaultEnd = "2020-04-15"
   const defaultdist = "Al" //Al for ALL disctricts
+  const defaultweapon = "Al" //Al for ALL weapons
   const Baltimore_position = [39.2904,-76.6122]
 
   
@@ -123,7 +125,8 @@ function App(){
     Axios.get("http://127.0.0.1:5000/crimeagebargraph",{params:{
       startdatebga: defaultStart, 
       enddatebga: defaultEnd,
-      districtbga: defaultdist}
+      districtbga: defaultdist,
+      weaponbga: defaultweapon}
       }).then((response) => {
         setcrimeagebar(response.data)
         console.log(response.status)
@@ -142,7 +145,8 @@ function App(){
     Axios.get("http://127.0.0.1:5000/heatmapmarkers", {params:{
       startdateheat: defaultStart, 
       enddateheat: defaultEnd,
-      districtheat: defaultdist}
+      districtheat: defaultdist,
+      weaponheat: defaultweapon}
     }).then((response) => {
         setheatmap(response.data)
         console.log(response.status)
@@ -158,7 +162,7 @@ function App(){
       alert("End date needs to be greater than Start Date")
     }
     //if no value for one or both start/end dates have not been entered, do not do anything
-    else if(startDateheat === "" || endDateheat === "" || districtheat === ""){
+    else if(startDateheat === "" || endDateheat === "" || districtheat === "" || weaponheat === ""){
       console.log("User has not entered either a start date or end date (HeatMap)")
       alert("Please fill out every field")
     }
@@ -166,7 +170,8 @@ function App(){
     Axios.get('http://127.0.0.1:5000/heatmapmarkers', {params:{
       startdateheat: startDateheat, 
       enddateheat: endDateheat,
-      districtheat: districtheat}
+      districtheat: districtheat,
+      weaponheat: weaponheat}
       }).then((response) => {
       //Overrides stored data in coviddata variable
       console.log(response.data)
@@ -223,6 +228,35 @@ function App(){
           <option value="SE">SouthEaster</option>
           <option value="SW">SouthWestern</option>
           <option value="C">Central</option>
+        </select>
+
+        {/*Gets user input from list for weapon, stores in weaponheat variable*/}
+        <label>Weapon:</label>
+        <select required type="" id="ageweapon" name="weapon"
+        onChange={(e) =>{
+            setweaponheat(e.target.value)
+        }}>
+          <option value=""  defaultValue={""} >Select Weapon</option>
+          <option value="Al">All</option>
+          <option value="1">None</option>
+          <option value="2">Other</option>
+          <option value="3">Firearm</option>
+          <option value="4">Knife</option>
+          <option value="5">Hands</option>
+          <option value="6">Personal Weapon</option>
+          <option value="7">Fire</option>
+          <option value="8">Cutting instrument</option>
+          <option value="9">Blunt Object</option>
+          <option value="10">Motor Vehicle</option>
+          <option value="11">Drugs,Narcotics,Sleeping pills</option>
+          <option value="12">Unknown</option>
+          <option value="13">Other (Firearm)</option>
+          <option value="14">Handgun</option>
+          <option value="15">Automatic Handgun</option>
+          <option value="16">Asphyxiation</option>
+          <option value="17">Rifle</option>
+          <option value="18">Shotgun</option>
+
         </select>
 
         {/*Form submit button (KEEP AS TYPE button! breaks otherwise)*/ }
@@ -364,8 +398,8 @@ function App(){
         </select>
 
         {/*Gets user input from list for weapon, stores in weaponbga variable*/}
-        <label>District:</label>
-        <select required type="" id="agedisctrict" name="district"
+        <label>Weapon:</label>
+        <select required type="" id="ageweapon" name="weapon"
         onChange={(e) =>{
             setweaponbga(e.target.value)
         }}>
