@@ -146,6 +146,8 @@ def agelist():
     district = str(request.args.get("districtbga"))
     weapon= str(request.args.get("weaponbga"))
     
+    #print(weapon)
+
     #format html calendar input into datetime to query matches
     sdate = datetime.strptime(sdate, '%Y-%m-%d')
     edate = datetime.strptime(edate, '%Y-%m-%d')
@@ -233,27 +235,42 @@ def heatmapmarkers():
     sdate = str(request.args.get("startdateheat"))
     edate = str(request.args.get("enddateheat"))
     district = str(request.args.get("districtheat"))
+    weapon = str(request.args.get("weaponheat"))
 
     #format html calendar input into datetime to query matches
     sdate = datetime.strptime(sdate, '%Y-%m-%d')
     edate = datetime.strptime(edate, '%Y-%m-%d')
 
-    #Queries all crime committed between two dates and a specific district given by user
+    #queries crime in specified district between start and end date
     if(district != "Al"):
-        crime_test = Crime.query.filter(Crime.CrimeDate.between(sdate,edate),Crime.District.like(district)).all()
+        
+        #if specific distric and weapon
+        if(weapon != "Al"):
+            heat_crime = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district), Crime.Weapon.like(weapon)).all()
+        #if specific district but all weapon
+        else:
+            heat_crime = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district)).all()
+
     #Queries all crime committed between two dates given by user for ALL districts
     else:
-        crime_test = Crime.query.filter(Crime.CrimeDate.between(sdate,edate)).all()
+
+        #if all districts and choses specific weapon
+        if(weapon !="Al"):
+            heat_crime = Crime.query.filter(Crime.CrimeDate.between(sdate,edate),Crime.Weapon.like(weapon)).all()
+
+        #if all district and all weapons
+        else:   
+            heat_crime = Crime.query.filter(Crime.CrimeDate.between(sdate,edate)).all()
 
 
     #2-D list. Each row is a pair of latitude, logitude, and intensity of the marker
     crime_list = []
 
     q = 0
-    while q <= len(crime_test)-1:   
+    while q <= len(heat_crime)-1:   
 
         #has to be sent in format [Lat,Long,Intensity]     
-        crime_list.append([crime_test[q].Latitude,crime_test[q].Longitude,"0.00001"])
+        crime_list.append([heat_crime[q].Latitude,heat_crime[q].Longitude,"0.00001"])
         q+=1
     
     return crime_list
