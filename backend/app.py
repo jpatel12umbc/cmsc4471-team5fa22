@@ -136,7 +136,7 @@ def dateslist():
 
 
 
-#Default view and Updates bar graph for criminal ages with user input from form 
+# view and Updates bar graph for criminal ages with user input from form 
 @app.route('/crimeagebargraph', methods=['GET'])
 def agelist():
 
@@ -237,34 +237,78 @@ def heatmapmarkers():
     district = str(request.args.get("districtheat"))
     weapon = str(request.args.get("weaponheat"))
 
+    #Each index corresponds to a counter for that district [N,S,E,W,NE,NW,SE,SW,C]
+    district_markers_test = [0,0,0,0,0,0,0,0,0]
+    #District names used for querying all districts for crime counts
+    districts_name = ['N','S','E','W','NE','NW','SE','SW','C']
+
     #format html calendar input into datetime to query matches
     sdate = datetime.strptime(sdate, '%Y-%m-%d')
     edate = datetime.strptime(edate, '%Y-%m-%d')
 
-    #queries crime in specified district between start and end date
+    #queries crime in SPECIFIC district between start and end date
     if(district != "Al"):
         
-        #if specific distric and weapon
+        #if SPECIFIC distric and SPECIFIC weapon
         if(weapon != "Al"):
             heat_crime = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district), Crime.Weapon.like(weapon)).all()
-        #if specific district but all weapon
+
+            #get crime counts for SPECIFIC district and SPECIFIC weapon
+            x = 0
+            for dist in districts_name:
+                if(dist == district):
+                    temp = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district), Crime.Weapon.like(weapon)).count()
+                    district_markers_test[x] = temp
+                else:
+                    district_markers_test[x] = 0
+                x+=1
+            
+        #if SPECIFIC district but ALL weapon
         else:
             heat_crime = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district)).all()
 
-    #Queries all crime committed between two dates given by user for ALL districts
+            #get crime count for SPECIFIC district and ALL weapons
+            x = 0
+            for dist in districts_name:
+                if(dist == district):
+                    temp = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(dist)).count()
+                    district_markers_test[x] = temp
+                else:
+                    district_markers_test[x] = 0
+                x+=1
+
+
+    #Queries ALL crime committed between two dates given by user for ALL districts
     else:
 
-        #if all districts and choses specific weapon
+        #if ALL districts and choses SPECIFIC weapon
         if(weapon !="Al"):
             heat_crime = Crime.query.filter(Crime.CrimeDate.between(sdate,edate),Crime.Weapon.like(weapon)).all()
+            
+            #get crime count for each district with SPECIFIC weapon
+            x=0
+            for dist in districts_name:
+                curr = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(dist),Crime.Weapon.like(weapon)).count()
+                district_markers_test[x] = curr
+                x+=1
 
-        #if all district and all weapons
+
+        #if ALL district and ALL weapons
         else:   
             heat_crime = Crime.query.filter(Crime.CrimeDate.between(sdate,edate)).all()
+            print(len(heat_crime))
+
+            #get crime count for each district with ALL weapons
+            x=0
+            for dist in districts_name:
+                curr = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(dist)).count()
+                district_markers_test[x] = curr
+                x+=1
 
 
-    #2-D list. Each row is a pair of latitude, logitude, and intensity of the marker
+    #2-D list. Each row is a pair of latitude, logitude, and intensity of the marker ([lat,long,intensity])
     crime_list = []
+    
 
     q = 0
     while q <= len(heat_crime)-1:   
@@ -273,7 +317,13 @@ def heatmapmarkers():
         crime_list.append([heat_crime[q].Latitude,heat_crime[q].Longitude,"0.00001"])
         q+=1
     
-    return crime_list
+    
+    #list of 2 indecies. First element crime ([lat,long,intensity]) for each crime (2-d list). Second element number of crimes per district to display ([N,E,S,W,NE,NW,SE,SW,C])
+    test_list = []
+    test_list.append(crime_list)
+    test_list.append(district_markers_test)
+    #return list with fist index for heatmap location data, second index for district marker count
+    return test_list
 
 
 ###############################################################################################################################
