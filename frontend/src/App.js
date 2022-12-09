@@ -5,7 +5,9 @@ import {XYPlot, XAxis, YAxis, HorizontalGridLines, VerticalGridLines, LineSeries
 import { MapContainer, TileLayer, Map, Marker, Popup, ZoomControl} from 'react-leaflet'
 import '../node_modules/leaflet/dist/leaflet.css'
 import {HeatmapLayer} from "react-leaflet-heatmap-layer-v3/lib";
-
+import icon from '../node_modules/leaflet/dist/images/marker-icon.png';
+import iconShadow from '../node_modules/leaflet/dist/images/marker-shadow.png';
+import L from 'leaflet';
 
 function App(){
   
@@ -24,12 +26,20 @@ function App(){
   const [districtbga, setdistrictbga] = useState('');
   const [weaponbga, setweaponbga] = useState('');
 
+  //stores currently mapped heatmap, gets updated when filter is applied
+  const [heatmap, setheatmap] = useState([]);
   //stores start/end date and selected district for heatmap
   const [startDateheat, setStartDateheat] = useState('');
   const [endDateheat, setEndDateheat] = useState('');
+  //stores district and weapon respectively for heatmap
   const [districtheat, setdistrictheat] = useState('');
   const [weaponheat, setweaponheat] = useState('');
-
+  //stores crime count for each district with current filters applied to be shown on heatmap  (in format [N,S,E,W,NE,NW,SE,SW,C])
+  const [district_marker_count, setdistrict_marker_count] = useState([]);
+  //a temporary variable for district_marker_count to help with order of execution (useState for some reason execute in a different order)
+  var temp_dist_marker_count = [];
+  const [opacity_list, setopacity_list] = useState([])
+  
   
   //values used to store Hint data covid line graph (for prompt when mousing over graphs)
   const [currval, setCurrval] = useState({});
@@ -55,9 +65,46 @@ function App(){
   const defaultdist = "Al" //Al for ALL disctricts
   const defaultweapon = "Al" //Al for ALL weapons
   const Baltimore_position = [39.2904,-76.6122]
+  //coordinates for each district's marker on heatmap (set to corresponding districts police station. Was easiest/relavent to do)
+  const C_coords = [39.29040060714916, -76.6083176460339]
+  const N_coords = [39.34327061854928, -76.65227776931071]
+  const S_coords = [39.25294073387729, -76.61716571349152]
+  const E_coords = [39.30984494938172, -76.57341682883616]
+  const W_coords = [39.30073509254237, -76.64440801103035]
+  const NE_coords = [39.34096873001896, -76.58257950917572]
+  const NW_coords = [39.34474923684397, -76.68489303245235]
+  const SE_coords = [39.28790141779125, -76.54715550547152]
+  const SW_coords = [39.2784977311718, -76.66355846870357]
 
-  
+//Creates a pin icon for Marker
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  //iconSize: [25, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 
+
+//(used in Heatmap)this function will check all of the crime counts for each district (stored in temp_dist_marker_count). If the district has 0 crimes, set its corresponding opacity to 0 to make it invisible. 
+const marker_check = () =>{
+
+  //Each index corresponds to an opacity for that district's marker on the heatmap [N,S,E,W,NE,NW,SE,SW,C]
+  const temp_list = [0,0,0,0,0,0,0,0,0]
+
+
+  for(let i=0; i < temp_dist_marker_count.length; i++){
+    if(temp_dist_marker_count[i] > 0){
+      //console.log(district_marker_count[i] , " if")
+      temp_list[i] = 100;
+    }
+    else{
+      temp_list[i] = 0
+      //console.log(district_marker_count[i] , " else")
+    }
+  }
+  console.log("temp_list at end = ", temp_list)
+  setopacity_list(temp_list)
+}
   
   //sends start and end date to backend, gets list of dictionaries back for line graph
   const startEndDate = () => {
@@ -137,8 +184,6 @@ function App(){
   },[]);
 
 
-  //testing leaflet / leaflet-react
-  const [heatmap, setheatmap] = useState([]);
 
   //Sets default heatmap for default dates and all districts to be displayed
   useEffect(() => {
@@ -148,7 +193,15 @@ function App(){
       districtheat: defaultdist,
       weaponheat: defaultweapon}
     }).then((response) => {
-        setheatmap(response.data)
+        //override heatmap with [lat.long,intensity]
+        setheatmap(response.data[0])
+
+        //override count of crimes for markers on heatmap
+        setdistrict_marker_count(response.data[1])
+
+        //have to use temp variable to correctly check the markers since actions can be done out of order when using useeffects (is safe to use district_marker_count in HTML part of code! Temp var is out of scop of HTML)
+        temp_dist_marker_count = response.data[1]
+        marker_check()
         console.log(response.status)
       }
     )
@@ -158,7 +211,7 @@ function App(){
   const startEndDateheat = () =>{
     //checking if valid end and start date
     if(endDateheat < startDateheat){
-      console.log("User entered invalid start and end dates")
+      console.log("User entered invalid start and end dates",  endDateheat)
       alert("End date needs to be greater than Start Date")
     }
     //if no value for one or both start/end dates have not been entered, do not do anything
@@ -172,10 +225,17 @@ function App(){
       enddateheat: endDateheat,
       districtheat: districtheat,
       weaponheat: weaponheat}
-      }).then((response) => {
-      //Overrides stored data in coviddata variable
-      console.log(response.data)
-      setheatmap(response.data)
+      }).then((res) => {
+      //Overrides stored data in heatmap variable with [lat,long,intensity]
+      setheatmap(res.data[0])
+
+      //override count of crimes for markers on heatmap 
+      setdistrict_marker_count(res.data[1])
+
+      //have to use temp variable to correctly check the markers since actions can be done out of order when using useeffects (is safe to use district_marker_count in HTML part of code! Temp var is out of scop of HTML)
+      temp_dist_marker_count = res.data[1]
+      console.log(temp_dist_marker_count)
+      marker_check()
       })
     }
 
@@ -287,6 +347,21 @@ function App(){
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
+
+
+          {/*These markers represent each district on the heatmap. The opacity will be either 0 or 100 depending on if it needs to be present or not.
+           A marker is not present if the crime count for the district is 0 (e.g. only north marker will show if the specified district is notrhern) */}
+          <Marker position={N_coords} opacity={opacity_list[0]}> <Popup> Northern <br></br>Crimes: {district_marker_count[0]}</Popup></Marker>
+          <Marker position={S_coords} opacity={opacity_list[1]}><Popup> Southern <br></br>Crimes: {district_marker_count[1]}</Popup></Marker>
+          <Marker position={E_coords} opacity={opacity_list[2]}><Popup> Eastern <br></br>Crimes: {district_marker_count[2]}</Popup></Marker>
+          <Marker position={W_coords} opacity={opacity_list[3]}><Popup> Western <br></br>Crimes: {district_marker_count[3]}</Popup></Marker>
+          <Marker position={NE_coords} opacity={opacity_list[4]}><Popup> North Eastern <br></br>Crimes: {district_marker_count[4]}</Popup></Marker>
+          <Marker position={NW_coords} opacity={opacity_list[5]}><Popup> North Western <br></br>Crimes: {district_marker_count[5]}</Popup></Marker>
+          <Marker position={SE_coords} opacity={opacity_list[6]}><Popup> South Easter <br></br>Crimes: {district_marker_count[6]}</Popup></Marker>
+          <Marker position={SW_coords} opacity={opacity_list[7]}><Popup> South Western <br></br>Crimes: {district_marker_count[7]} </Popup></Marker>
+          <Marker position={C_coords} opacity={opacity_list[8]}><Popup> Central <br></br>Crimes: {district_marker_count[8]} </Popup></Marker>
+
+
 
           <ZoomControl position='topright'/>
         </MapContainer>
