@@ -20,6 +20,12 @@ function App(){
 
   //stores currently graphed criminal age (the age bar graph)
   const [crimeagebar, setcrimeagebar] = useState([]);
+  //stores current graphed criminal gender based on age (Age bar graph)
+  const [crimegenderbar_m, setcrimegenderbar_m] = useState([]);
+  const [crimegenderbar_f, setcrimegenderbar_f] = useState([]);
+  //const [crimegenderbar_u, setcrimegenderbar_u] = useState([]);
+  //const [crimegenderbar_na, setcrimegenderbar_na] = useState([]);
+
   //stores start and end date respectively for crime bargraph age (bga) and district
   const [endDatebga, setEndDatebga] = useState('');
   const [startDatebga, setStartDatebga] = useState('');
@@ -47,7 +53,7 @@ function App(){
   //values used to store Hint data covid line graph (for prompt when mousing over graphs)
   const [currval, setCurrval] = useState({});
   //Used for covid line graph. Used to set the current x and y to be displayed in graph and sets what css classname to have (used to hide hint when mouse leaves graph)
-  const [covidlhintstyle,setcovidlhintstyle] = useState('');
+  const [covidlhintstyle,setcovidlhintstyle] = useState('hidehint'); //default state set to hide prompt before mousing over
   const hinthandlecovidl = (val,cssClassname)=>{
     setCurrval(val)
     setcovidlhintstyle(cssClassname)
@@ -56,9 +62,23 @@ function App(){
   //values used to store Hint data crimeage graph (for prompt when mousing over graphs)
   const [currbarval, setCurrbarval] = useState({});
   //Used for age crime bargraph. Used to set the current x and y to be displayed in graph and sets what css classname to have (used to hide hint when mouse leaves graph)
-  const [crimeagehintstyle,setcrimeagehintstyle] = useState('');
+  const [crimeagehintstyle,setcrimeagehintstyle] = useState('hidehint');  //default state set to hide prompt before mousing over
   const hinthandlecrimeage = (val,cssClassname)=>{
     setCurrbarval(val)
+    setcrimeagehintstyle(cssClassname)
+  }
+  //values used to store Hint data crimeage graph (for prompt when mousing over graphs)
+  const [currbarvalm, setCurrbarvalm] = useState({});
+  //Used for age crime bargraph. Used to set the current x and y to be displayed in graph and sets what css classname to have (used to hide hint when mouse leaves graph)
+  const hinthandlecrimem = (val,cssClassname)=>{
+    setCurrbarvalm(val)
+    setcrimeagehintstyle(cssClassname)
+  }
+  //values used to store Hint data crimeage graph (for prompt when mousing over graphs)
+  const [currbarvalf, setCurrbarvalf] = useState({});
+  //Used for age crime bargraph. Used to set the current x and y to be displayed in graph and sets what css classname to have (used to hide hint when mouse leaves graph)
+  const hinthandlecrimef = (val,cssClassname)=>{
+    setCurrbarvalf(val)
     setcrimeagehintstyle(cssClassname)
   }
 
@@ -154,7 +174,13 @@ const marker_check = () =>{
     } ).then((response) => {
       //Overrides stored data in crimeagebar variable
       console.log(response.data)
-      setcrimeagebar(response.data)
+      setcrimeagebar(response.data[0])
+      setcrimegenderbar_m(response.data[1][0])
+      console.log("male!",response.data[1][0])
+      setcrimegenderbar_f(response.data[1][1])
+      //setcrimegenderbar_u(response.data[1][2])
+      //setcrimegenderbar_na(response.data[1][3])
+
       })
     }
   }
@@ -178,7 +204,13 @@ const marker_check = () =>{
       districtbga: defaultdist,
       weaponbga: defaultweapon}
       }).then((response) => {
-        setcrimeagebar(response.data)
+        setcrimeagebar(response.data[0])
+        setcrimegenderbar_m(response.data[1][0])
+        console.log("just age",response.data[0])
+        console.log("male!",response.data[1][0])
+        setcrimegenderbar_f(response.data[1][1])
+        //setcrimegenderbar_u(response.data[1][2])
+        //setcrimegenderbar_na(response.data[1][3])       
         console.log(response.status)
       }
       ).catch(function (error) {
@@ -411,6 +443,12 @@ const marker_check = () =>{
         <FlexibleXYPlot height={400} xType="ordinal"  margin={{bottom: 100, left: 50, right: 10, top: 10}} onMouseLeave={(value)=>setcovidlhintstyle("hidehint")}>
           <HorizontalGridLines />
           <VerticalGridLines />
+          
+          {/*Setting the data dictionary to be displayed({"x": date, "y": avgincrease}). Also setting currval to nearest point to cursor and sets css class to display*/}  
+          <LineSeries data={coviddata} 
+            onNearestX={(value) =>  hinthandlecovidl(value,"hintprompt")}
+            />
+
           <XAxis  title="Date" 
             tickLabelAngle={-90}
             tickFormat={function tickFormat(currdate){return new Date(currdate).toLocaleDateString()}}
@@ -418,13 +456,6 @@ const marker_check = () =>{
             orientation="bottom"/>
 
           <YAxis headLine title="1-Week Average Increase" />
-
-
-          {/*Setting the data dictionary to be displayed({"x": date, "y": avgincrease}). Also setting currval to nearest point to cursor and sets css class to display*/}  
-          <LineSeries data={coviddata} 
-            onNearestX={(value) =>  hinthandlecovidl(value,"hintprompt")}
-            />
-
 
           {/*Outputs data from currval*/}
           <Hint value={currval} marginLeft={0} marginTop={0}>
@@ -523,20 +554,35 @@ const marker_check = () =>{
         <FlexibleXYPlot xType="ordinal" width={1000} height={300} onMouseLeave={(value)=>setcrimeagehintstyle("hidehint")}>
           <HorizontalGridLines/>
           <VerticalGridLines/>
-          <XAxis  title="Ages"/>
-
-          <YAxis headLine title="Count"/>
+          
 
           {/*Setting the data dictionary to be displayed. X is category, Y is #of occurences ({"x": age-category, "y": #of occurences})
           Cursor will change displayed hint value and set correct css style to not be hidden*/}  
           <VerticalBarSeries data={crimeagebar}
             onNearestX={(value) => hinthandlecrimeage(value,"hintprompt")}/>
+          <VerticalBarSeries data={crimegenderbar_m} color="lightblue"
+            onNearestX={(value) => hinthandlecrimem(value,"hintprompt")}/>
+          <VerticalBarSeries data={crimegenderbar_f} color="pink"
+            onNearestX={(value) => hinthandlecrimef(value,"hintprompt")}/>
+          {/*
+          <VerticalBarSeries data={crimegenderbar_u}
+            onNearestX={(value) => hinthandlecrimeage(value,"hintprompt")}/>
+          <VerticalBarSeries data={crimegenderbar_na}
+            onNearestX={(value) => hinthandlecrimeage(value,"hintprompt")}/>    
+        */}  
+
+          <XAxis  title="Ages"  />
+          <YAxis headLine title="Count"/>
 
           {/*Outputs data from currval*/}
           <Hint value={currbarval} marginLeft={0} marginTop={0}>
             <div className={crimeagehintstyle}>
-              <h3 className='hinttitle'>Count:</h3>
+              <h3 className='hinttitle'>Total:</h3>
               <p>{currbarval.y}</p>
+              <h3 className='hinttitle'>Male:</h3>
+              <p>{currbarvalm.y}</p>
+              <h3 className='hinttitle'>Female:</h3>
+              <p>{currbarvalf.y}</p>
             </div>
           </Hint>
         </FlexibleXYPlot>
