@@ -85,12 +85,6 @@ class Weapons(db.Model):
         self.WeaponID = WeaponID
         self.Weapons = Weapons
 
-"""
-def parse_geodata(GeoLocation):
-    GeoLocation = GeoLocation.strip('()').split(',')
-    GeoLocation = [float(x) for x in GeoLocation]
-    return GeoLocation
-"""
 #Helper function (HEATMAP) for finding the most used weapon with the given filters from the user
 def weapon_max(sdate,edate,dist):
     weapon_names = ["N/A","OTHER","FIREARM","KNIFE","HANDS","PERSONAL_WEAPON","FIRE","KNIFE_CUTTING_INSTRUMENT","BLUNT_OBJECT","MOTOR_VEHICLE","DRUGS","UNKOWN","OTHER_FIREAEM","HANDGUN","AUTO_HANDGUN","ASPHYXIATION","RIFLE","SHOTGUN"]
@@ -189,7 +183,11 @@ def agelist():
     #list to keep track of counts in each category in ranges list
     range_count = [0,0,0,0,0,0,0,0]
     ranges = ["<20","20-25","26-35","36-50","51-60","61-69","70+", "NA"]
-    
+    gender_range_count_m = [0,0,0,0,0,0,0,0]
+    gender_range_count_f = [0,0,0,0,0,0,0,0]
+    #gender_range_count_u = [0,0,0,0,0,0,0,0]
+    #gender_range_count_na = [0,0,0,0,0,0,0,0]
+
 
     #queries crime in specified district between start and end date
     if(district != "Al"):
@@ -197,55 +195,153 @@ def agelist():
         #if specific distric and weapon
         if(weapon != "Al"):
             allcrime_timepd = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district), Crime.Weapon.like(weapon)).all()
-    
+            male = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district), Crime.Weapon.like(weapon) ,Crime.Gender.like("M")).all()
+            female = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district), Crime.Weapon.like(weapon) ,Crime.Gender.like("F")).all()
+            #unknown = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district), Crime.Weapon.like(weapon) ,Crime.Gender.like("U")).all()
+            #not_available = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district), Crime.Weapon.like(weapon) ,Crime.Gender.like("N")).all()
         #if specific district but all weapon
         else:
             allcrime_timepd = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district)).all()
-
+            male = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district),Crime.Gender.like("M")).all()
+            female = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district) ,Crime.Gender.like("F")).all()
+            #unknown = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district) ,Crime.Gender.like("U")).all()
+            #not_available = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district) ,Crime.Gender.like("N")).all()
 
     #queries crime in ALL districts between start and end date
     else:
         #if all districts and choses specific weapon
         if(weapon !="Al"):
             allcrime_timepd = Crime.query.filter(Crime.CrimeDate.between(sdate,edate),Crime.Weapon.like(weapon)).all()
+            male = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.Weapon.like(weapon) ,Crime.Gender.like("M")).all()
+            female = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.Weapon.like(weapon) ,Crime.Gender.like("F")).all()
+            #unknown = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.Weapon.like(weapon) ,Crime.Gender.like("U")).all()
+            #not_available = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.Weapon.like(weapon) ,Crime.Gender.like("N")).all()
 
         #if all district and all weapons
         else:   
             allcrime_timepd = Crime.query.filter(Crime.CrimeDate.between(sdate,edate)).all()
+            male = Crime.query.filter(Crime.CrimeDate.between(sdate,edate),Crime.Gender.like("M")).all()
+            female = Crime.query.filter(Crime.CrimeDate.between(sdate,edate),Crime.Gender.like("F")).all()
+            #unknown = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.Gender.like("U")).all()
+            #not_available = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.Gender.like("N")).all()
 
     #list holds dictionaries to be used as the bar graph's data 
     crime_ages = []
+    #list holds disctionaties for genders for bar graph
+    crime_gender_m = []
+    crime_gender_f = []
+    #crime_gender_u = []
+    #crime_gender_na = []
+
+    
 
     #Increment appropriate age range
     i=0
+    male_flag = True
+    female_flag = True
+    #unknown_flag = True
+    #na_flag = True
     while i <= len(allcrime_timepd)-1:
         crime = allcrime_timepd[i]
         age = crime.Age
 
+        if(i >= len(male)):
+            male_flag = False
+        if(i >= len(female)):
+            female_flag = False
+        #if(i >= len(unknown)):
+        #    unknown_flag = False
+        #if(i >= len(not_available)):
+        #    na_flag = False
+
         if(age < 20 and age > 0):
             range_count[0] +=1
-        
+            if(male_flag):
+                gender_range_count_m[0] +=1
+            if(female_flag):
+                gender_range_count_f[0] +=1
+            #if(unknown_flag):
+            #    gender_range_count_u[0] +=1
+            #if(na_flag):
+            #    gender_range_count_na[0] +=1
+
         elif(age >= 20 and age <= 25):
             range_count[1] +=1
+            if(male_flag):
+                gender_range_count_m[1] +=1
+            if(female_flag):
+                gender_range_count_f[1] +=1
+            #if(unknown_flag):
+            #    gender_range_count_u[1] +=1
+            #if(na_flag):
+            #    gender_range_count_na[1] +=1
 
         elif(age >= 26 and age <=35):
             range_count[2] +=1
+            if(male_flag):
+                gender_range_count_m[2] +=1
+            if(female_flag):
+                gender_range_count_f[2] +=1
+            #if(unknown_flag):
+            #    gender_range_count_u[2] +=1
+            #if(na_flag):
+            #    gender_range_count_na[2] +=1
 
         elif(age >= 36 and age <= 50):
             range_count[3] +=1
+            if(male_flag):
+                gender_range_count_m[3] +=1
+            if(female_flag):
+                gender_range_count_f[3] +=1
+            #if(unknown_flag):
+            #   gender_range_count_u[3] +=1
+            #if(na_flag):
+            #    gender_range_count_na[3] +=1
 
         elif(age >= 51 and age <=60):
             range_count[4] +=1
+            if(male_flag):
+                gender_range_count_m[4] +=1
+            if(female_flag):
+                gender_range_count_f[4] +=1
+            #if(unknown_flag):
+            #    gender_range_count_u[4] +=1
+            #if(na_flag):
+            #    gender_range_count_na[4] +=1
 
         elif(age >= 61 and age <= 69):
             range_count[5] +=1
+            if(male_flag):
+                gender_range_count_m[5] +=1
+            if(female_flag):
+                gender_range_count_f[5] +=1
+            #if(unknown_flag):
+            #    gender_range_count_u[5] +=1
+            #if(na_flag):
+            #    gender_range_count_na[5] +=1
 
         elif(age >= 70):
             range_count[6] +=1
+            if(male_flag):
+                gender_range_count_m[6] +=1
+            if(female_flag):
+                gender_range_count_f[6] +=1
+            #if(unknown_flag):
+            #    gender_range_count_u[6] +=1
+            #if(na_flag):
+            #    gender_range_count_na[6] +=1
 
         #NA age
         elif(age == 0): 
             range_count[7] +=1
+            if(male_flag):
+                gender_range_count_m[7] +=1
+            if(female_flag):
+                gender_range_count_f[7] +=1
+            #if(unknown_flag):
+            #    gender_range_count_u[7] +=1
+            #if(na_flag):
+            #    gender_range_count_na[7] +=1
 
         i+=1
 
@@ -254,12 +350,32 @@ def agelist():
     while q < len(range_count):
         dict = {"x":ranges[q], "y": range_count[q]}
         crime_ages.append(dict)
-
+        
+        dict_gender = {"x":ranges[q], "y": gender_range_count_m[q]}
+        crime_gender_m.append(dict_gender)
+        dict_gender_f = {"x":ranges[q], "y": gender_range_count_f[q]}
+        crime_gender_f.append(dict_gender_f)
+        #dict_gender_u = {"x":ranges[q], "y": gender_range_count_u[q]}
+        #crime_gender_u.append(dict_gender_u)
+        #dict_gender_na = {"x":ranges[q], "y": gender_range_count_na[q]}
+        #crime_gender_na.append(dict_gender_na)        
+        
         q+=1
 
     #returning value will populate or override the crimeagebar variable (in App.js) to update the bar graph
-    return crime_ages
-    
+    #return crime_ages
+    combine = []
+    #combine.append(crime_ages)
+    combine.append(crime_gender_m)
+    combine.append(crime_gender_f)
+    #combine.append(crime_gender_u)
+    #combine.append(crime_gender_na)
+
+    to_return = []
+    to_return.append(crime_ages)
+    to_return.append(combine)
+
+    return to_return
 
 
 @app.route('/heatmapmarkers', methods=['GET'])
