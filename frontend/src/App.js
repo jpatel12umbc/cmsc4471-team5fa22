@@ -2,7 +2,7 @@ import './App.css';
 import React,{useRef, useEffect, useState,setState} from 'react';
 import Axios from 'axios';
 import {XYPlot, XAxis, YAxis, HorizontalGridLines, VerticalGridLines, LineSeries, VerticalBarSeries,FlexibleXYPlot,Hint} from "react-vis";
-import { MapContainer, TileLayer, Map, Marker, Popup, ZoomControl} from 'react-leaflet'
+import { MapContainer, TileLayer, Map, Marker, Popup, ZoomControl, ScaleControl} from 'react-leaflet'
 import '../node_modules/leaflet/dist/leaflet.css'
 import {HeatmapLayer} from "react-leaflet-heatmap-layer-v3/lib";
 import icon from '../node_modules/leaflet/dist/images/marker-icon.png';
@@ -36,6 +36,9 @@ function App(){
   const [weaponheat, setweaponheat] = useState('');
   //stores crime count for each district with current filters applied to be shown on heatmap  (in format [N,S,E,W,NE,NW,SE,SW,C])
   const [district_marker_count, setdistrict_marker_count] = useState([]);
+  const[district_marker_max_weapon, setdistrict_marker_max_weapon] = useState([]);
+  const[district_marker_max_crimecode, setdistrict_marker_max_crimecode] = useState([]);
+
   //a temporary variable for district_marker_count to help with order of execution (useState for some reason execute in a different order)
   var temp_dist_marker_count = [];
   const [opacity_list, setopacity_list] = useState([])
@@ -198,11 +201,13 @@ const marker_check = () =>{
 
         //override count of crimes for markers on heatmap
         setdistrict_marker_count(response.data[1])
+        setdistrict_marker_max_weapon(response.data[2])
+        setdistrict_marker_max_crimecode(response.data[3])
 
         //have to use temp variable to correctly check the markers since actions can be done out of order when using useeffects (is safe to use district_marker_count in HTML part of code! Temp var is out of scop of HTML)
         temp_dist_marker_count = response.data[1]
         marker_check()
-        console.log(response.status)
+        console.log(response.data[2])
       }
     )
   },[]);
@@ -225,15 +230,18 @@ const marker_check = () =>{
       enddateheat: endDateheat,
       districtheat: districtheat,
       weaponheat: weaponheat}
-      }).then((res) => {
+      }).then((response) => {
       //Overrides stored data in heatmap variable with [lat,long,intensity]
-      setheatmap(res.data[0])
+      setheatmap(response.data[0])
 
       //override count of crimes for markers on heatmap 
-      setdistrict_marker_count(res.data[1])
+      setdistrict_marker_count(response.data[1])
+      setdistrict_marker_max_weapon(response.data[2])
+      setdistrict_marker_max_crimecode(response.data[3])
+
 
       //have to use temp variable to correctly check the markers since actions can be done out of order when using useeffects (is safe to use district_marker_count in HTML part of code! Temp var is out of scop of HTML)
-      temp_dist_marker_count = res.data[1]
+      temp_dist_marker_count = response.data[1]
       console.log(temp_dist_marker_count)
       marker_check()
       })
@@ -331,7 +339,9 @@ const marker_check = () =>{
       {/*Leaflet-react Map with heatmap layer */}
       <div className="heatmap">
         {/*Create Map*/}
-        <MapContainer center={Baltimore_position} zoom={12} scrollWheelZoom={true} zoomControl={false}> 
+        <MapContainer center={Baltimore_position} zoom={12} scrollWheelZoom={true} zoomControl={false} wheelPxPerZoomLevel={100}> 
+
+        <ZoomControl position='topright'></ZoomControl>
 
           {/*Heatmap controls
             points takes in a 2-D list; each row contains [latitude,longitude,marker-intensity]*/}
@@ -351,19 +361,18 @@ const marker_check = () =>{
 
           {/*These markers represent each district on the heatmap. The opacity will be either 0 or 100 depending on if it needs to be present or not.
            A marker is not present if the crime count for the district is 0 (e.g. only north marker will show if the specified district is notrhern) */}
-          <Marker position={N_coords} opacity={opacity_list[0]}> <Popup> Northern <br></br>Crimes: {district_marker_count[0]}</Popup></Marker>
-          <Marker position={S_coords} opacity={opacity_list[1]}><Popup> Southern <br></br>Crimes: {district_marker_count[1]}</Popup></Marker>
-          <Marker position={E_coords} opacity={opacity_list[2]}><Popup> Eastern <br></br>Crimes: {district_marker_count[2]}</Popup></Marker>
-          <Marker position={W_coords} opacity={opacity_list[3]}><Popup> Western <br></br>Crimes: {district_marker_count[3]}</Popup></Marker>
-          <Marker position={NE_coords} opacity={opacity_list[4]}><Popup> North Eastern <br></br>Crimes: {district_marker_count[4]}</Popup></Marker>
-          <Marker position={NW_coords} opacity={opacity_list[5]}><Popup> North Western <br></br>Crimes: {district_marker_count[5]}</Popup></Marker>
-          <Marker position={SE_coords} opacity={opacity_list[6]}><Popup> South Easter <br></br>Crimes: {district_marker_count[6]}</Popup></Marker>
-          <Marker position={SW_coords} opacity={opacity_list[7]}><Popup> South Western <br></br>Crimes: {district_marker_count[7]} </Popup></Marker>
-          <Marker position={C_coords} opacity={opacity_list[8]}><Popup> Central <br></br>Crimes: {district_marker_count[8]} </Popup></Marker>
+          <Marker position={N_coords} opacity={opacity_list[0]}> <Popup> Northern <br></br>Total Crimes: {district_marker_count[0]} <br></br>Most Frequent Weapon: {district_marker_max_weapon[0]} <br></br> Most Frequent Crime: {district_marker_max_crimecode[0]}</Popup></Marker>
+          <Marker position={S_coords} opacity={opacity_list[1]}><Popup> Southern <br></br>Total Crimes: {district_marker_count[1]} <br></br>Most Frequent Weapon: {district_marker_max_weapon[1]}<br></br> Most Frequent Crime: {district_marker_max_crimecode[1]}</Popup></Marker>
+          <Marker position={E_coords} opacity={opacity_list[2]}><Popup> Eastern <br></br>Total Crimes: {district_marker_count[2]} <br></br>Most Frequent Weapon: {district_marker_max_weapon[2]}<br></br> Most Frequent Crime: {district_marker_max_crimecode[2]}</Popup></Marker>
+          <Marker position={W_coords} opacity={opacity_list[3]}><Popup> Western <br></br>Total Crimes: {district_marker_count[3]} <br></br>Most Frequent Weapon: {district_marker_max_weapon[3]}<br></br> Most Frequent Crime: {district_marker_max_crimecode[3]} </Popup></Marker>
+          <Marker position={NE_coords} opacity={opacity_list[4]}><Popup> North Eastern <br></br>Total Crimes: {district_marker_count[4]} <br></br>Most Frequent Weapon: {district_marker_max_weapon[4]}<br></br> Most Frequent Crime: {district_marker_max_crimecode[4]} </Popup></Marker>
+          <Marker position={NW_coords} opacity={opacity_list[5]}><Popup> North Western <br></br>Total Crimes: {district_marker_count[5]} <br></br>Most Frequent Weapon: {district_marker_max_weapon[5]}<br></br> Most Frequent Crime: {district_marker_max_crimecode[5]} </Popup></Marker>
+          <Marker position={SE_coords} opacity={opacity_list[6]}><Popup> South Eastern <br></br>Total Crimes: {district_marker_count[6]} <br></br>Most Frequent Weapon: {district_marker_max_weapon[6]}<br></br> Most Frequent Crime: {district_marker_max_crimecode[6]} </Popup></Marker>
+          <Marker position={SW_coords} opacity={opacity_list[7]}><Popup> South Western <br></br>Total Crimes: {district_marker_count[7]} <br></br>Most Frequent Weapon: {district_marker_max_weapon[7]}<br></br> Most Frequent Crime: {district_marker_max_crimecode[7]} </Popup></Marker>
+          <Marker position={C_coords} opacity={opacity_list[8]}><Popup> Central <br></br>Total Crimes: {district_marker_count[8]} <br></br>Most used Weapon: {district_marker_max_weapon[8]}<br></br> Most Frequent Crime: {district_marker_max_crimecode[8]} </Popup></Marker>
 
-
-
-          <ZoomControl position='topright'/>
+    
+          
         </MapContainer>
       </div>  
 
