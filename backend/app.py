@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, render_template
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import between
+from sqlalchemy import between, func
 from flask_marshmallow import Marshmallow
 from flask_cors import CORS
 from datetime import datetime
@@ -91,6 +91,39 @@ def parse_geodata(GeoLocation):
     GeoLocation = [float(x) for x in GeoLocation]
     return GeoLocation
 """
+#Helper function (HEATMAP) for finding the most used weapon with the given filters from the user
+def weapon_max(sdate,edate,dist):
+    weapon_names = ["N/A","OTHER","FIREARM","KNIFE","HANDS","PERSONAL_WEAPON","FIRE","KNIFE_CUTTING_INSTRUMENT","BLUNT_OBJECT","MOTOR_VEHICLE","DRUGS","UNKOWN","OTHER_FIREAEM","HANDGUN","AUTO_HANDGUN","ASPHYXIATION","RIFLE","SHOTGUN"]
+    #query gets all crimes (within filter) and orders them by the frequency in which the weapon occurs. The first index will be a crime that used the weapon with the most occurances  
+    curr_weapon = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(dist)).group_by(Crime.Weapon).order_by(func.count(Crime.Weapon).desc()).all()
+    to_use = curr_weapon
+
+    #make sure there is a valid list for checking next element
+    if(len(curr_weapon) > 1):
+         #dont use Weapon 1 since it is N/A and wouldnt be as useful to the user as a weapon
+        if(curr_weapon[0].Weapon == 1):
+            to_use = curr_weapon[1].Weapon        
+        
+            
+    #When most frequent weapon is the only weapon available
+    else:
+        to_use = curr_weapon[0].Weapon
+    
+    #subtract one since index of weapons cheatsheet starts at 1, but indecies begin at 0
+    return weapon_names[to_use - 1]
+    
+#Helper function (HEATMAP) for finding the most committed crime with the given filters from the user
+def crime_max(sdate,edate,dist):
+        curr_crime = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(dist)).group_by(Crime.CrimeCode).order_by(func.count(Crime.CrimeCode).desc()).all()
+
+        temp = curr_crime[0].CrimeCode
+        #print(temp)
+        
+        look_up = crimecode.query.filter(crimecode.CODE.like(temp)).first()
+
+        #print("test ", look_up.CrimeName)
+        return look_up.CrimeName
+
     
 #Line graph for covid 1-week average
 @app.route('/covidlinegraph', methods=['GET'])
@@ -239,6 +272,10 @@ def heatmapmarkers():
 
     #Each index corresponds to a counter for that district [N,S,E,W,NE,NW,SE,SW,C]
     district_markers_test = [0,0,0,0,0,0,0,0,0]
+    district_markers_max_weapon = ['','','','','','','','','']
+    district_markers_max_crimecode = ['','','','','','','','','']
+
+
     #District names used for querying all districts for crime counts
     districts_name = ['N','S','E','W','NE','NW','SE','SW','C']
 
@@ -259,8 +296,16 @@ def heatmapmarkers():
                 if(dist == district):
                     temp = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district), Crime.Weapon.like(weapon)).count()
                     district_markers_test[x] = temp
+
+                    #NOTE: eventhough there is a specified weapon, it would be more useful for the user to know the most used weapon OVERALL instead of just redisplaying their currently selected weapon
+                    district_markers_max_weapon[x] = weapon_max(sdate,edate,dist)
+                    district_markers_max_crimecode[x] = crime_max(sdate,edate,dist)
+
                 else:
                     district_markers_test[x] = 0
+                    district_markers_max_weapon[x] = ""
+                    district_markers_max_crimecode[x] = ""
+
                 x+=1
             
         #if SPECIFIC district but ALL weapon
@@ -273,8 +318,14 @@ def heatmapmarkers():
                 if(dist == district):
                     temp = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(dist)).count()
                     district_markers_test[x] = temp
+                    district_markers_max_weapon[x] = weapon_max(sdate,edate,dist)
+                    district_markers_max_crimecode[x] = crime_max(sdate,edate,dist)
+
+
                 else:
                     district_markers_test[x] = 0
+                    district_markers_max_weapon[x] = ""
+                    district_markers_max_crimecode[x] = ""
                 x+=1
 
 
@@ -285,24 +336,45 @@ def heatmapmarkers():
         if(weapon !="Al"):
             heat_crime = Crime.query.filter(Crime.CrimeDate.between(sdate,edate),Crime.Weapon.like(weapon)).all()
             
-            #get crime count for each district with SPECIFIC weapon
+            #get crime count for ALL district with SPECIFIC weapon
             x=0
             for dist in districts_name:
                 curr = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(dist),Crime.Weapon.like(weapon)).count()
                 district_markers_test[x] = curr
+
+
+                #NOTE: eventhough there is a specified weapon, it would be more useful for the user to know the most used weapon OVERALL instead of just redisplaying their currently selected weapon
+                #query gets all crimes (within filter) and orders them by the frequency in which the weapon occurs. The first index will be a crime that used the weapon with the most occurances  
+                district_markers_max_weapon[x] = weapon_max(sdate,edate,dist)
+                district_markers_max_crimecode[x] = crime_max(sdate,edate,dist)
+
+                
                 x+=1
 
 
         #if ALL district and ALL weapons
         else:   
             heat_crime = Crime.query.filter(Crime.CrimeDate.between(sdate,edate)).all()
-            print(len(heat_crime))
+            #print(len(heat_crime))
 
             #get crime count for each district with ALL weapons
             x=0
             for dist in districts_name:
                 curr = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(dist)).count()
                 district_markers_test[x] = curr
+
+
+                #query gets all crimes (within filter) and orders them by the frequency in which the weapon occurs. The first index will be a crime that used the weapon with the most occurances  
+                #curr_weapon = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(dist)).group_by(Crime.Weapon).order_by(func.count(Crime.Weapon).desc()).all()
+                #to_use = curr_weapon
+                #if(len(curr_weapon) > 1):
+                    #dont use Weapon 1 since it is unknown and wouldnt be as useful to the user
+                #    if(curr_weapon[0].Weapon == 1):
+                #        to_use = curr_weapon[1].Weapon
+                #district_markers_max_weapon[x] = weapon_names[to_use - 1] #weapon_names[max_weapon_id - 1]
+                district_markers_max_weapon[x] = weapon_max(sdate,edate,dist)
+                district_markers_max_crimecode[x] = crime_max(sdate,edate,dist)
+
                 x+=1
 
 
@@ -322,6 +394,10 @@ def heatmapmarkers():
     test_list = []
     test_list.append(crime_list)
     test_list.append(district_markers_test)
+    test_list.append(district_markers_max_weapon)
+    test_list.append(district_markers_max_crimecode)
+    #print(test_list[2])
+    #print(test_list[3])
     #return list with fist index for heatmap location data, second index for district marker count
     return test_list
 
