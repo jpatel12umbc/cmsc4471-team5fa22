@@ -76,6 +76,12 @@ class Crime(db.Model):
         self.Latitude = Latitude
         self.Longitude = Longitude
 
+class CrimeSchema(ma.Schema):
+    class Meta:
+        fields = ('RowID','DayNum', 'CrimeDate', 'CrimeCode', 'Weapon', 'Gender', 'Age', 'District', 'Latitude', 'Longitude')
+
+crime_schema = CrimeSchema(many=True)
+
 #creates weapons table
 class Weapons(db.Model):
     WeaponID = db.Column(db.Integer, primary_key = True)
@@ -173,7 +179,6 @@ def agelist():
     district = str(request.args.get("districtbga"))
     weapon= str(request.args.get("weaponbga"))
     
-    #print(weapon)
 
     #format html calendar input into datetime to query matches
     sdate = datetime.strptime(sdate, '%Y-%m-%d')
@@ -185,9 +190,7 @@ def agelist():
     ranges = ["<20","20-25","26-35","36-50","51-60","61-69","70+", "NA"]
     gender_range_count_m = [0,0,0,0,0,0,0,0]
     gender_range_count_f = [0,0,0,0,0,0,0,0]
-    #gender_range_count_u = [0,0,0,0,0,0,0,0]
-    #gender_range_count_na = [0,0,0,0,0,0,0,0]
-
+   
 
     #queries crime in specified district between start and end date
     if(district != "Al"):
@@ -197,16 +200,13 @@ def agelist():
             allcrime_timepd = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district), Crime.Weapon.like(weapon)).all()
             male = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district), Crime.Weapon.like(weapon) ,Crime.Gender.like("M")).all()
             female = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district), Crime.Weapon.like(weapon) ,Crime.Gender.like("F")).all()
-            #unknown = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district), Crime.Weapon.like(weapon) ,Crime.Gender.like("U")).all()
-            #not_available = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district), Crime.Weapon.like(weapon) ,Crime.Gender.like("N")).all()
+            
         #if specific district but all weapon
         else:
             allcrime_timepd = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district)).all()
             male = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district),Crime.Gender.like("M")).all()
             female = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district) ,Crime.Gender.like("F")).all()
-            #unknown = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district) ,Crime.Gender.like("U")).all()
-            #not_available = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(district) ,Crime.Gender.like("N")).all()
-
+            
     #queries crime in ALL districts between start and end date
     else:
         #if all districts and choses specific weapon
@@ -214,33 +214,25 @@ def agelist():
             allcrime_timepd = Crime.query.filter(Crime.CrimeDate.between(sdate,edate),Crime.Weapon.like(weapon)).all()
             male = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.Weapon.like(weapon) ,Crime.Gender.like("M")).all()
             female = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.Weapon.like(weapon) ,Crime.Gender.like("F")).all()
-            #unknown = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.Weapon.like(weapon) ,Crime.Gender.like("U")).all()
-            #not_available = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.Weapon.like(weapon) ,Crime.Gender.like("N")).all()
-
+           
         #if all district and all weapons
         else:   
             allcrime_timepd = Crime.query.filter(Crime.CrimeDate.between(sdate,edate)).all()
             male = Crime.query.filter(Crime.CrimeDate.between(sdate,edate),Crime.Gender.like("M")).all()
             female = Crime.query.filter(Crime.CrimeDate.between(sdate,edate),Crime.Gender.like("F")).all()
-            #unknown = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.Gender.like("U")).all()
-            #not_available = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.Gender.like("N")).all()
-
+            
     #list holds dictionaries to be used as the bar graph's data 
     crime_ages = []
     #list holds disctionaties for genders for bar graph
     crime_gender_m = []
     crime_gender_f = []
-    #crime_gender_u = []
-    #crime_gender_na = []
 
-    
 
     #Increment appropriate age range
     i=0
     male_flag = True
     female_flag = True
-    #unknown_flag = True
-    #na_flag = True
+   
     while i <= len(allcrime_timepd)-1:
         crime = allcrime_timepd[i]
         age = crime.Age
@@ -249,76 +241,48 @@ def agelist():
             male_flag = False
         if(i >= len(female)):
             female_flag = False
-        #if(i >= len(unknown)):
-        #    unknown_flag = False
-        #if(i >= len(not_available)):
-        #    na_flag = False
-
+       
         if(age < 20 and age > 0):
             range_count[0] +=1
             if(male_flag):
                 gender_range_count_m[0] +=1
             if(female_flag):
                 gender_range_count_f[0] +=1
-            #if(unknown_flag):
-            #    gender_range_count_u[0] +=1
-            #if(na_flag):
-            #    gender_range_count_na[0] +=1
-
+          
         elif(age >= 20 and age <= 25):
             range_count[1] +=1
             if(male_flag):
                 gender_range_count_m[1] +=1
             if(female_flag):
                 gender_range_count_f[1] +=1
-            #if(unknown_flag):
-            #    gender_range_count_u[1] +=1
-            #if(na_flag):
-            #    gender_range_count_na[1] +=1
-
+           
         elif(age >= 26 and age <=35):
             range_count[2] +=1
             if(male_flag):
                 gender_range_count_m[2] +=1
             if(female_flag):
                 gender_range_count_f[2] +=1
-            #if(unknown_flag):
-            #    gender_range_count_u[2] +=1
-            #if(na_flag):
-            #    gender_range_count_na[2] +=1
-
+          
         elif(age >= 36 and age <= 50):
             range_count[3] +=1
             if(male_flag):
                 gender_range_count_m[3] +=1
             if(female_flag):
                 gender_range_count_f[3] +=1
-            #if(unknown_flag):
-            #   gender_range_count_u[3] +=1
-            #if(na_flag):
-            #    gender_range_count_na[3] +=1
-
+           
         elif(age >= 51 and age <=60):
             range_count[4] +=1
             if(male_flag):
                 gender_range_count_m[4] +=1
             if(female_flag):
                 gender_range_count_f[4] +=1
-            #if(unknown_flag):
-            #    gender_range_count_u[4] +=1
-            #if(na_flag):
-            #    gender_range_count_na[4] +=1
-
+    
         elif(age >= 61 and age <= 69):
             range_count[5] +=1
             if(male_flag):
                 gender_range_count_m[5] +=1
             if(female_flag):
                 gender_range_count_f[5] +=1
-            #if(unknown_flag):
-            #    gender_range_count_u[5] +=1
-            #if(na_flag):
-            #    gender_range_count_na[5] +=1
 
         elif(age >= 70):
             range_count[6] +=1
@@ -326,11 +290,7 @@ def agelist():
                 gender_range_count_m[6] +=1
             if(female_flag):
                 gender_range_count_f[6] +=1
-            #if(unknown_flag):
-            #    gender_range_count_u[6] +=1
-            #if(na_flag):
-            #    gender_range_count_na[6] +=1
-
+            
         #NA age
         elif(age == 0): 
             range_count[7] +=1
@@ -338,10 +298,6 @@ def agelist():
                 gender_range_count_m[7] +=1
             if(female_flag):
                 gender_range_count_f[7] +=1
-            #if(unknown_flag):
-            #    gender_range_count_u[7] +=1
-            #if(na_flag):
-            #    gender_range_count_na[7] +=1
 
         i+=1
 
@@ -354,22 +310,15 @@ def agelist():
         dict_gender = {"x":ranges[q], "y": gender_range_count_m[q]}
         crime_gender_m.append(dict_gender)
         dict_gender_f = {"x":ranges[q], "y": gender_range_count_f[q]}
-        crime_gender_f.append(dict_gender_f)
-        #dict_gender_u = {"x":ranges[q], "y": gender_range_count_u[q]}
-        #crime_gender_u.append(dict_gender_u)
-        #dict_gender_na = {"x":ranges[q], "y": gender_range_count_na[q]}
-        #crime_gender_na.append(dict_gender_na)        
+        crime_gender_f.append(dict_gender_f)     
         
         q+=1
 
     #returning value will populate or override the crimeagebar variable (in App.js) to update the bar graph
     #return crime_ages
     combine = []
-    #combine.append(crime_ages)
     combine.append(crime_gender_m)
     combine.append(crime_gender_f)
-    #combine.append(crime_gender_u)
-    #combine.append(crime_gender_na)
 
     to_return = []
     to_return.append(crime_ages)
@@ -479,15 +428,6 @@ def heatmapmarkers():
                 curr = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(dist)).count()
                 district_markers_test[x] = curr
 
-
-                #query gets all crimes (within filter) and orders them by the frequency in which the weapon occurs. The first index will be a crime that used the weapon with the most occurances  
-                #curr_weapon = Crime.query.filter(Crime.CrimeDate.between(sdate,edate), Crime.District.like(dist)).group_by(Crime.Weapon).order_by(func.count(Crime.Weapon).desc()).all()
-                #to_use = curr_weapon
-                #if(len(curr_weapon) > 1):
-                    #dont use Weapon 1 since it is unknown and wouldnt be as useful to the user
-                #    if(curr_weapon[0].Weapon == 1):
-                #        to_use = curr_weapon[1].Weapon
-                #district_markers_max_weapon[x] = weapon_names[to_use - 1] #weapon_names[max_weapon_id - 1]
                 district_markers_max_weapon[x] = weapon_max(sdate,edate,dist)
                 district_markers_max_crimecode[x] = crime_max(sdate,edate,dist)
 
@@ -506,34 +446,178 @@ def heatmapmarkers():
         q+=1
     
     
-    #list of 2 indecies. First element crime ([lat,long,intensity]) for each crime (2-d list). Second element number of crimes per district to display ([N,E,S,W,NE,NW,SE,SW,C])
+    #list of 4 indecies. 
+    # First element crime ([lat,long,intensity]) for each crime (2-d list). 
+    # Second element number of crimes per district to display ([N,E,S,W,NE,NW,SE,SW,C])
+    #third element is a list if the most frequent weapon in each district ([N,E,S,W,NE,NW,SE,SW,C])
+    #fourth element is the most committed crime in each district ([N,E,S,W,NE,NW,SE,SW,C])
     test_list = []
     test_list.append(crime_list)
     test_list.append(district_markers_test)
     test_list.append(district_markers_max_weapon)
     test_list.append(district_markers_max_crimecode)
-    #print(test_list[2])
-    #print(test_list[3])
+
     #return list with fist index for heatmap location data, second index for district marker count
     return test_list
 
 
-###############################################################################################################################
 
-####update for when user changes a startdate, end date and or location for covid data##########
-# @app.route('/update', methods = ['GET', 'POST'])
-# def update():
 
-#     if request.method == 'POST':
-#         my_data = covidcase.query.get(request.form.get('DayNum')) #may not need this line
+#ADMIN CONTROLS#######################################################################################################################################
 
-#         my_data.DayNum = request.form['DayNum']
-#         my_data.student_name = request.form['DATE']
-#         my_data.credits_earned = request.form['DATE']
+#CREATE: CRIME
+@app.route('/admincreatecrime', methods=['GET'])
+def admincreatecrime():
 
-#         db.session.commit()
+    daynum =  str(request.args.get("daynum"))
+    crimedatetime = str(request.args.get("crimedatetime"))
+    crimedatetime= datetime.strptime(crimedatetime, '%Y-%m-%d')
+    crime_code = str(request.args.get("crimecode"))
+    createweapon =  str(request.args.get("createweapon"))
+    gender =  str(request.args.get("gender"))
+    age =  str(request.args.get("age"))
+    district =  str(request.args.get("district"))
+    lat =  str(request.args.get("lat"))
+    longi =  str(request.args.get("longi"))
 
-#         return redirect(url_for('index'))
+    rowid = Crime.query.count()
+    rowid += 1
+
+    #if not valid crimcode, do not insert. Will alert user
+    if(not crimecode.query.filter(crimecode.CODE.like(crime_code)).first()):
+        return "NO Crimecode"
+
+    temp = Crime(rowid, daynum, crimedatetime, crime_code, createweapon, gender, age, district, lat, longi)
+    db.session.add(temp)
+    db.session.commit()
+
+    return "It worked!"
+
+#DELETE: CRIME
+@app.route('/admindeletecrime', methods=['GET'])
+def admindeletecrime():
+
+    start =  int(request.args.get("crimedelstart"))
+    end = int(request.args.get("crimedelend"))
+
+    #Check if start RowID is valid
+    exists = Crime.query.filter(Crime.RowID.like(start)).first()
+    if(not exists):
+        return "NO Start"
+
+    #check if end RowID is valid 
+    exists = Crime.query.filter(Crime.RowID.like(end)).first()
+    if(not exists):
+        return "NO End"
+    
+
+    #delete crime rows between given start and end RowIDs
+    while start <= end:
+
+        #verifies if the row exists, if it does, delete between range
+        exists = Crime.query.filter(Crime.RowID.like(start)).first()
+        if(exists):
+            to_delete = Crime.query.get(start)
+            db.session.delete(to_delete)
+
+
+        start +=1
+
+    db.session.commit()
+
+    return "It worked!" 
+
+#CREATE: COVID
+@app.route('/admincreatecovid', methods=['GET'])
+def admincreatecovid():
+
+    daynum =  int(request.args.get("daynumcovid"))
+
+    #format date for querying
+    date =  str(request.args.get("datetimecovid"))
+    date = date.replace("-", "/")
+    date += " 10:00:00+00"
+    date = datetime.strptime(date, '%Y/%m/%d %H:%M:%S+%f')
+
+    dailyincrease =  int(request.args.get("dailyincrease"))
+
+    #if there is not a previous daynum, do not insert. Will alert user
+    if(not covidcase.query.filter(covidcase.DayNum.like(daynum - 1)).first()):
+        return "NO Previous"
+
+
+    #if daynum already exists, do not insert. Will alert user
+    if(covidcase.query.filter(covidcase.DayNum.like(daynum)).first()):
+        return "NO Exists"
+
+    #calculate 7-day average increase
+    x = 0
+    sum = 0
+    divisor = 0
+    while x <= 7:
+
+        exists = covidcase.query.filter(covidcase.DayNum.like(daynum - x)).first()
+        if(exists):
+            sum  += covidcase.query.get(daynum-x).AVGIncrease
+            divisor +=1
+        x+=1
+
+    avg = int(sum/divisor)
+    #print("sum = ", sum , " divisor = ", divisor)
+
+    #if previous exists, calculate total increase
+    if(covidcase.query.filter(covidcase.DayNum.like(daynum - 1)).first()):
+        prev_covid = covidcase.query.get(daynum-1)
+        prev_covid = prev_covid.TotalCases
+        totalcases = dailyincrease + prev_covid
+    
+    #if previous day doesnt exist, get the last valid day for its total cases. (THIS CASE SHOULD NEVER HAPPEN DUE TO BOUNDS CHECKS)
+    else:
+        maxdayentry = covidcase.query.filter(covidcase.DayNum.like(covidcase.query.count())).first()
+        totalcases = dailyincrease + maxdayentry.TotalCases
+
+
+
+    temp = covidcase(daynum,date,totalcases,dailyincrease,avg)
+
+    db.session.add(temp)
+    db.session.commit()
+
+    return "It worked!"
+
+#DELETE: COVID
+@app.route('/admindeletecovid', methods=['GET'])
+def admindeletecovid():
+
+    start =  int(request.args.get("coviddelstart"))
+    end = int(request.args.get("coviddelend"))
+
+    #Check if start daynum is valid
+    exists = covidcase.query.filter(covidcase.DayNum.like(start)).first()
+    if(not exists):
+        return "NO Start"
+
+    #check if end daynum is valid 
+    exists = covidcase.query.filter(covidcase.DayNum.like(end)).first()
+    if(not exists):
+        return "NO End"
+    
+    while start <= end:
+
+        #verifies if the row exists, if it does, delete between range
+        exists = covidcase.query.filter(covidcase.DayNum.like(start)).first()
+        if(exists):
+            to_delete = covidcase.query.get(start)
+            db.session.delete(to_delete)
+
+
+        start +=1
+
+    db.session.commit()
+
+    return "It worked!"
+
+
         
 if __name__ == "__main__":
     app.run(debug=True)
