@@ -23,8 +23,6 @@ function App(){
   //stores current graphed criminal gender based on age (Age bar graph)
   const [crimegenderbar_m, setcrimegenderbar_m] = useState([]);
   const [crimegenderbar_f, setcrimegenderbar_f] = useState([]);
-  //const [crimegenderbar_u, setcrimegenderbar_u] = useState([]);
-  //const [crimegenderbar_na, setcrimegenderbar_na] = useState([]);
 
   //stores start and end date respectively for crime bargraph age (bga) and district
   const [endDatebga, setEndDatebga] = useState('');
@@ -40,9 +38,11 @@ function App(){
   //stores district and weapon respectively for heatmap
   const [districtheat, setdistrictheat] = useState('');
   const [weaponheat, setweaponheat] = useState('');
-  //stores crime count for each district with current filters applied to be shown on heatmap  (in format [N,S,E,W,NE,NW,SE,SW,C])
+  //stores crime count for each district with current filters applied to be shown on heatmap  (in format [N,S,E,W,NE,NW,SE,SW,C]) (int)
   const [district_marker_count, setdistrict_marker_count] = useState([]);
+  //stores most frequently used weapon for each district with current filters applied to be shown on heatmap  (in format [N,S,E,W,NE,NW,SE,SW,C]) (string)
   const[district_marker_max_weapon, setdistrict_marker_max_weapon] = useState([]);
+  //stores most committed crime in  each district with current filters applied to be shown on heatmap  (in format [N,S,E,W,NE,NW,SE,SW,C]) (string)
   const[district_marker_max_crimecode, setdistrict_marker_max_crimecode] = useState([]);
 
   //a temporary variable for district_marker_count to help with order of execution (useState for some reason execute in a different order)
@@ -176,11 +176,8 @@ const marker_check = () =>{
       console.log(response.data)
       setcrimeagebar(response.data[0])
       setcrimegenderbar_m(response.data[1][0])
-      console.log("male!",response.data[1][0])
+      //console.log("male!",response.data[1][0])
       setcrimegenderbar_f(response.data[1][1])
-      //setcrimegenderbar_u(response.data[1][2])
-      //setcrimegenderbar_na(response.data[1][3])
-
       })
     }
   }
@@ -209,8 +206,7 @@ const marker_check = () =>{
         console.log("just age",response.data[0])
         console.log("male!",response.data[1][0])
         setcrimegenderbar_f(response.data[1][1])
-        //setcrimegenderbar_u(response.data[1][2])
-        //setcrimegenderbar_na(response.data[1][3])       
+            
         console.log(response.status)
       }
       ).catch(function (error) {
@@ -280,6 +276,152 @@ const marker_check = () =>{
     }
 
   }
+  const [daynum, setdaynum] = useState('')
+  const[crimedatetime, setcrimedatetime] = useState('')
+  const[crimecode, setcrimecode] = useState('')
+  const[createweapon, setcreateweapon] = useState('')
+  const[gender, setgender] = useState('')
+  const[age, setage] = useState('')
+  const[district, setdistrict] = useState('')
+  const[lat, setlat] = useState('')
+  const[longi, setlongi] = useState('')
+
+
+  const [adminstyle, setadminstyle] = useState('hidehint')
+  const [passwordattempt,setpasswordattempt] = useState('')
+  const [usernameattempt, setusernameattempt] = useState('')
+  const adminlogin = () =>{
+    if(passwordattempt === "admin" && usernameattempt === "admin"){
+      //correct password
+
+      //set style to visible for creating and deleting
+      setadminstyle("app")
+
+    }
+    else{
+      alert("Incorrect username and/or password")
+    }
+    
+  }
+
+  const admincreatecrime = () => {
+
+    if(daynum === "" || crimedatetime === "" || crimecode === "" || createweapon === "" || gender === "" || age === "" || district === "" || lat === "" || longi === ""){
+      alert("please enter all fields")
+    }
+    else{
+      Axios.get('http://127.0.0.1:5000/admincreatecrime', {params:{
+        daynum:daynum,
+        crimedatetime:crimedatetime,
+        crimecode:crimecode,
+        createweapon:createweapon,
+        gender:gender,
+        age:age,
+        district:district,
+        lat:lat,
+        longi:longi}
+        }).then((response) => {
+          console.log(response.status)
+          if(response.data === "NO Crimecode"){
+            alert("Please enter a valid crimecode")
+          }
+          if(response.data === "It worked!"){
+            alert("Success!")
+          }
+        })
+    }
+
+
+  }
+
+  const [crimedelstart, setcrimedelstart] = useState('')
+  const [crimedelend, setcrimedelend] = useState('')
+
+  const admindeletecrime = () => {
+    
+    if(crimedelend === "" || crimedelstart === "" || crimedelend < crimedelstart){
+      alert("please enter all fields. Make sure end value is greater than start")
+    }
+    else{
+      Axios.get('http://127.0.0.1:5000/admindeletecrime', {params:{
+        crimedelstart:crimedelstart,
+        crimedelend:crimedelend}
+        }).then((response) => {
+          console.log(response.status)
+          if(response.data === "NO Start"){
+            alert("Start RowID not valid")
+          }
+          if(response.data === "NO End"){
+            alert("End RowID not valid")
+          }
+          if(response.data === "It worked!"){
+            alert("Success!")
+          }
+        })
+    }
+  }
+
+  const [daynumcovid, setdaynumcovid] = useState('')
+  const [datetimecovid, setdatetimecovid] = useState('')
+  const [dailyincrease, setdailyincrease] = useState('')
+  const [avgincrease, setavgincrease] = useState('')
+
+  const admincreatecovid = () => {
+    if(daynumcovid === "" || datetimecovid === "" || dailyincrease === "" ){//|| dailyincrease === "" || avgincrease === ""){
+      alert("please enter all fields.")
+    }
+    else{
+      Axios.get('http://127.0.0.1:5000/admincreatecovid', {params:{
+        daynumcovid:daynumcovid,
+        datetimecovid:datetimecovid,
+        dailyincrease:dailyincrease}
+        //dailyincrease:dailyincrease,
+        //avgincrease:avgincrease}
+        }).then((response) => {
+          console.log(response.status)
+          if(response.data === "NO Exists"){
+            alert("DayNum already in use")
+          }
+          if(response.data === "NO Previous"){
+            alert("There is not a previous DayNum")
+          }
+          if(response.data === "It worked!"){
+            alert("Success!")
+          }
+        })
+    }
+    
+
+  }
+
+  const [coviddelstart, setcoviddelstart] = useState('')
+  const [coviddelend, setcoviddelend] = useState('')
+
+  const admindeletecovid = () => {
+
+    if(coviddelend === "" || coviddelstart === "" || coviddelend < coviddelstart){
+      alert("please enter all fields. Make sure end value is greater than start")
+    }
+    else{
+      Axios.get('http://127.0.0.1:5000/admindeletecovid', {params:{
+        coviddelstart:coviddelstart,
+        coviddelend:coviddelend}
+        }).then((response) => {
+          console.log(response.status)
+          if(response.data === "NO Start"){
+            alert("Start DayNum not valid")
+          }
+          if(response.data === "NO End"){
+            alert("End DayNum not valid")
+          }
+          if(response.data === "It worked!"){
+            alert("Success!")
+          }
+        })
+    }
+  }
+
+
 
 
   return (
@@ -345,17 +487,7 @@ const marker_check = () =>{
           <option value="5">Hands</option>
           <option value="6">Personal Weapon</option>
           <option value="7">Fire</option>
-          <option value="8">Cutting instrument</option>
-          <option value="9">Blunt Object</option>
-          <option value="10">Motor Vehicle</option>
-          <option value="11">Drugs,Narcotics,Sleeping pills</option>
           <option value="12">Unknown</option>
-          <option value="13">Other (Firearm)</option>
-          <option value="14">Handgun</option>
-          <option value="15">Automatic Handgun</option>
-          <option value="16">Asphyxiation</option>
-          <option value="17">Rifle</option>
-          <option value="18">Shotgun</option>
 
         </select>
 
@@ -527,17 +659,7 @@ const marker_check = () =>{
           <option value="5">Hands</option>
           <option value="6">Personal Weapon</option>
           <option value="7">Fire</option>
-          <option value="8">Cutting instrument</option>
-          <option value="9">Blunt Object</option>
-          <option value="10">Motor Vehicle</option>
-          <option value="11">Drugs,Narcotics,Sleeping pills</option>
           <option value="12">Unknown</option>
-          <option value="13">Other (Firearm)</option>
-          <option value="14">Handgun</option>
-          <option value="15">Automatic Handgun</option>
-          <option value="16">Asphyxiation</option>
-          <option value="17">Rifle</option>
-          <option value="18">Shotgun</option>
 
         </select>
 
@@ -589,40 +711,156 @@ const marker_check = () =>{
       </div>
  
 
-    {/* test output for covid cases for reference when returning query dump
-    <div>
-      {coviddata.map(cases => {
-          return(
-          <div key = {cases.DayNum}>
 
-            <table>
-              <tbody>
-                <tr>
-                  <th>DayNum</th>
-                  <th>DATE</th>
-                  <th>TotalCases</th>
-                  <th>DailyIncrease</th>
-                  <th>AVGIncrease</th>
-                </tr>
+{/*ADMIN LOGIN ***********************************************************************************************************/}
+      <div>
+        <h4> admin login</h4>
+        <form className='adminlogin'>
 
-                <tr>
-                  <td>{cases.DayNum}</td>
-                  <td>{cases.DATE}</td>
-                  <td>{cases.TotalCases}</td>
-                  <td>{cases.DailyIncrease}</td>
-                  <td>{cases.AVGIncrease}</td>
+          <label>Username:</label>
+          <input type={"text"} onChange={(e) =>{
+          setusernameattempt(e.target.value)}}>
+          </input>
+
+          <label>Password:</label>
+          <input type={"text"} onChange={(e) =>{
+          setpasswordattempt(e.target.value)}}>
+          </input>
+
+          <input type="button" onClick={adminlogin} value="Submit"></input>
+        </form>
 
 
-                </tr>
-              </tbody>
-            </table>
+        {/* CREATE for Crime table*/}
+        <form className={adminstyle}>
+        <h4>Create: Crime Table</h4>
 
-          </div>
-          )
-        })
-      }
-    </div>
-    */}
+            <label>DayNum:</label>
+            <input type="number" onChange={(e) =>{
+          setdaynum(e.target.value)}}></input> <br></br>
+
+            <label>Crimedate:</label>
+            <input type="date" onChange={(e) =>{
+          setcrimedatetime(e.target.value)}}></input> <br></br>
+
+            <label>CrimeCode</label>
+            <input type="text" onChange={(e) =>{
+          setcrimecode(e.target.value)}}></input> <br></br>
+
+            <label>Weapon:</label>
+            <select required type="" name="weapon"
+            onChange={(e) =>{
+                setcreateweapon(e.target.value)
+            }}>
+              <option value=""  defaultValue={""} >Select Weapon</option>
+              <option value="1">None</option>
+              <option value="2">Other</option>
+              <option value="3">Firearm</option>
+              <option value="4">Knife</option>
+              <option value="5">Hands</option>
+              <option value="6">Personal Weapon</option>
+              <option value="7">Fire</option>
+              <option value="12">Unknown</option>
+            </select> <br></br>
+
+            <label>Gender:</label>
+            <select required type="" name="gender"
+            onChange={(e) =>{
+                setgender(e.target.value)
+            }}>
+              <option value=""  defaultValue={""} >Select Weapon</option>
+              <option value="M">M</option>
+              <option value="F">F</option>
+              <option value="U">U</option>
+              <option value="N">N/A</option>
+            </select> <br></br>
+
+            <label>Age:</label>
+            <input type="number" onChange={(e) =>{
+          setage(e.target.value)}}></input> <br></br>
+
+            <label>District:</label>
+            <select required type="" name="district"
+            onChange={(e) =>{
+                setdistrict(e.target.value)
+            }}>
+              <option value=""  defaultValue={""} >Select District</option>
+              <option value="N">Northern</option>
+              <option value="S">Southern</option>
+              <option value="E">Eastern</option>
+              <option value="W">Western</option>
+              <option value="NE">NorthEastern</option>
+              <option value="NW">NorthWestern</option>
+              <option value="SE">SouthEaster</option>
+              <option value="SW">SouthWestern</option>
+              <option value="C">Central</option>
+            </select> <br></br>
+
+            <label>Latitude:</label>
+            <input type="float" onChange={(e) =>{
+          setlat(e.target.value)}}></input> <br></br>
+
+            <label>Longitude:</label>
+            <input type="float" onChange={(e) =>{
+          setlongi(e.target.value)}}></input> <br></br>
+
+          <input type="button" onClick={admincreatecrime} value="Submit"></input>
+        </form>
+
+
+        {/*DELETE Crime table */}
+        <form className={adminstyle}>
+        <h4>Delete: Crime Table</h4>
+
+            <label>Start RowID:</label>
+            <input type="number" onChange={(e) =>{
+          setcrimedelstart(e.target.value)}}></input> <br></br>
+
+            <label>End RowID:</label>
+            <input type="number" onChange={(e) =>{
+          setcrimedelend(e.target.value)}}></input> <br></br>
+
+
+          <input type="button" onClick={admindeletecrime} value="Submit"></input>
+        </form>
+
+
+        {/*CREATE Covid */}
+        <form className={adminstyle}>
+        <h4>Create: Covid Table</h4>
+
+          <label>DayNum:</label>
+            <input type="number" onChange={(e) =>{
+            setdaynumcovid(e.target.value)}}></input> <br></br>
+            
+          <label>Date:</label>
+            <input type="date" onChange={(e) =>{
+            setdatetimecovid(e.target.value)}}></input> <br></br>
+
+          <label>dailyincrease:</label>
+            <input type="number" onChange={(e) =>{
+            setdailyincrease(e.target.value)}}></input> <br></br>
+          
+          <input type="button" onClick={admincreatecovid} value="Submit"></input>
+        </form>  
+
+        {/*DELETE Covid */}
+        <form className={adminstyle}>
+        <h4>Create: Covid Table</h4>
+
+        <label>Start DayNum:</label>
+            <input type="number" onChange={(e) =>{
+          setcoviddelstart(e.target.value)}}></input> <br></br>
+
+            <label>End DayNum:</label>
+            <input type="number" onChange={(e) =>{
+          setcoviddelend(e.target.value)}}></input> <br></br>
+          
+          <input type="button" onClick={admindeletecovid} value="Submit"></input>
+        </form>                
+
+
+      </div>
 
     </div>
   );
