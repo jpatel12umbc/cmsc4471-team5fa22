@@ -125,7 +125,7 @@ const marker_check = () =>{
       //console.log(district_marker_count[i] , " else")
     }
   }
-  console.log("temp_list at end = ", temp_list)
+  //console.log("temp_list at end = ", temp_list)
   setopacity_list(temp_list)
 }
   
@@ -147,7 +147,8 @@ const marker_check = () =>{
       enddate: endDate}
     }).then((response) => {
       //Overrides stored data in coviddata variable
-      console.log(response.data)
+      //console.log(response.data)
+      console.log("Status code for COVID Line Graph (with user input) ",response.status)
       setcoviddata(response.data)
       })
     }
@@ -173,7 +174,8 @@ const marker_check = () =>{
       weaponbga: weaponbga}
     } ).then((response) => {
       //Overrides stored data in crimeagebar variable
-      console.log(response.data)
+      //console.log(response.data)
+      console.log("Status code for Crime Bar Graph (with user input)",response.status)
       setcrimeagebar(response.data[0])
       setcrimegenderbar_m(response.data[1][0])
       //console.log("male!",response.data[1][0])
@@ -189,7 +191,8 @@ const marker_check = () =>{
       enddate: defaultEnd}
       }).then((response) => {
         setcoviddata(response.data)
-        console.log(response.status)
+        console.log("Status code for COVID Line Graph (default values)",response.status)
+
       })
   },[]);
   
@@ -203,11 +206,10 @@ const marker_check = () =>{
       }).then((response) => {
         setcrimeagebar(response.data[0])
         setcrimegenderbar_m(response.data[1][0])
-        console.log("just age",response.data[0])
-        console.log("male!",response.data[1][0])
+        //console.log("just age",response.data[0])
+        //console.log("male!",response.data[1][0])
+        console.log("Status code for Crime Bar Graph (default values) ",response.status)
         setcrimegenderbar_f(response.data[1][1])
-            
-        console.log(response.status)
       }
       ).catch(function (error) {
       console.log("Error displaying default Crime Age Bar Graph. Page was refreshed before the queries in the backend could be completed.");
@@ -235,7 +237,8 @@ const marker_check = () =>{
         //have to use temp variable to correctly check the markers since actions can be done out of order when using useeffects (is safe to use district_marker_count in HTML part of code! Temp var is out of scop of HTML)
         temp_dist_marker_count = response.data[1]
         marker_check()
-        console.log(response.data[2])
+        //console.log(response.data[2])
+        console.log("Status code for Heat Map (default values) ",response.status)
       }
     )
   },[]);
@@ -270,8 +273,9 @@ const marker_check = () =>{
 
       //have to use temp variable to correctly check the markers since actions can be done out of order when using useeffects (is safe to use district_marker_count in HTML part of code! Temp var is out of scop of HTML)
       temp_dist_marker_count = response.data[1]
-      console.log(temp_dist_marker_count)
+      //console.log(temp_dist_marker_count)
       marker_check()
+      console.log("Status code for Heat Map (with user input) ",response.status)
       })
     }
 
@@ -321,7 +325,7 @@ const marker_check = () =>{
         lat:lat,
         longi:longi}
         }).then((response) => {
-          console.log(response.status)
+          console.log("Status code for ADMIN create crime ",response.status)
           if(response.data === "NO Crimecode"){
             alert("Please enter a valid crimecode")
           }
@@ -347,7 +351,7 @@ const marker_check = () =>{
         crimedelstart:crimedelstart,
         crimedelend:crimedelend}
         }).then((response) => {
-          console.log(response.status)
+          console.log("Status code for ADMIN delete crime ",response.status)
           if(response.data === "NO Start"){
             alert("Start RowID not valid")
           }
@@ -378,7 +382,7 @@ const marker_check = () =>{
         //dailyincrease:dailyincrease,
         //avgincrease:avgincrease}
         }).then((response) => {
-          console.log(response.status)
+          console.log("Status code for ADMIN create covid ",response.status)
           if(response.data === "NO Exists"){
             alert("DayNum already in use")
           }
@@ -407,7 +411,7 @@ const marker_check = () =>{
         coviddelstart:coviddelstart,
         coviddelend:coviddelend}
         }).then((response) => {
-          console.log(response.status)
+          console.log("Status code for ADMIN delete covid ",response.status)
           if(response.data === "NO Start"){
             alert("Start DayNum not valid")
           }
