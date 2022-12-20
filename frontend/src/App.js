@@ -132,19 +132,19 @@ const marker_check = () =>{
   //sends start and end date to backend, gets list of dictionaries back for line graph
   const startEndDate = () => {
     //checking if valid end and start date
-    if(endDate < startDate){
+    if(endDateheat < startDateheat){
       console.log("User entered invalid start and end dates")
       alert("End date needs to be greater than Start Date")
     }
     //if no value for one or both start/end dates have not been entered, do not do anything
-    else if(startDate === "" || endDate === ""){
+    else if(startDateheat === "" || endDateheat === ""){
       console.log("User has not entered either a start date or end date (Covid line graph)")
       alert("Please fill out every field")
     }
     else{
     Axios.get('http://127.0.0.1:5000/covidlinegraph', {params:{
-      startdate: startDate, 
-      enddate: endDate}
+      startdate: startDateheat, //left name is name in backend, right is name in frontend
+      enddate: endDateheat}
     }).then((response) => {
       //Overrides stored data in coviddata variable
       //console.log(response.data)
@@ -276,6 +276,7 @@ const marker_check = () =>{
       //console.log(temp_dist_marker_count)
       marker_check()
       console.log("Status code for Heat Map (with user input) ",response.status)
+      startEndDate()
       })
     }
 
@@ -546,27 +547,32 @@ const marker_check = () =>{
 
 
       {/*Covid line graph#################################################################################################### */}
+      {/*  *****NOW CHANGED TO TAKE INPUT FROM HEATMAP FORM******
       <form className='dateformcov'>
       
         {/*Gets user input from calendar, stores in startDate variable*/}
+        {/*
         <label>Start Date:</label>
         <input required type="date" id="start" name="date-start" 
         min="2020-03-15" max="2021-09-30"
         onChange={(e) =>{
           setStartDate(e.target.value)
         }}></input>
-        
+        */}
         {/*Gets user input from calendar, stores in endDate variable*/}
+        {/*
         <label>End Date:</label>
         <input required type="date" id="end" name="date-end"
         min="2020-03-15" max="2021-09-30"
         onChange={(e) =>{
           setEndDate(e.target.value)
         }}></input>
-
+      */}
         {/*Form submit button (KEEP AS TYPE button! breaks otherwise)*/ }
+      {/*
         <input type="button" onClick={startEndDate} value="Submit"></input>
       </form>
+      */}
 
 
       
@@ -576,7 +582,7 @@ const marker_check = () =>{
         <h3 id="lgraphtitle">Weekly Average Increase in COVID-19 cases </h3>
         <link rel="stylesheet" href="https://unpkg.com/react-vis/dist/style.css"></link>
 
-        <FlexibleXYPlot height={400} xType="ordinal"  margin={{bottom: 100, left: 50, right: 10, top: 10}} onMouseLeave={(value)=>setcovidlhintstyle("hidehint")}>
+        <FlexibleXYPlot height={250} xType="ordinal"  margin={{bottom: 100, left: 50, right: 10, top: 10}} onMouseLeave={(value)=>setcovidlhintstyle("hidehint")}>
           <HorizontalGridLines />
           <VerticalGridLines />
           
