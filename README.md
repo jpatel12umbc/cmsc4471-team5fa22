@@ -1,4 +1,5 @@
 # cmsc4471-team5fa22
+#By: Christopher Carnahan, Kevin Mensah, Josef Obitz, Jil Patel, Dillon Ward
 
 
 Jira Board: https://cmsc447team5fa22.atlassian.net/jira/software/projects/TEAM5447/boards/1/backlog?selectedIssue=TEAM5447-42
